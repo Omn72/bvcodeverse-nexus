@@ -1,11 +1,16 @@
 import Layout from '@/components/Layout';
 import Hero from '@/components/Hero';
+import Features from '@/components/Features';
+import CTA from '@/components/CTA';
+import Footer from '@/components/Footer';
 
 const Index = () => {
   return (
     <Layout>
       <Hero />
-      {/* Additional sections can be added here later */}
+      <Features />
+      <CTA />
+      <Footer />
     </Layout>
   );
 };
