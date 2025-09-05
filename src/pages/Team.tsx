@@ -3,6 +3,36 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Github, Linkedin } from 'lucide-react';
 
+// Custom CSS for photo filtering
+const photoFilterStyles = `
+  .team-photo-filter {
+    background-blend-mode: multiply;
+    mix-blend-mode: multiply;
+  }
+  
+  .team-photo-filter::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, 
+      rgba(255, 193, 7, 0.1) 0%, 
+      rgba(255, 235, 59, 0.1) 50%, 
+      rgba(255, 193, 7, 0.1) 100%);
+    pointer-events: none;
+    border-radius: inherit;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = photoFilterStyles;
+  document.head.appendChild(styleElement);
+}
+
 interface TeamMember {
   avatar: string;
   name: string;
@@ -11,63 +41,84 @@ interface TeamMember {
   github?: string;
 }
 
-// BVCodeVerse team members - you can replace with actual team photos
+// BVCodeVerse team members - using local team photos
 const TEAM_MEMBERS: TeamMember[] = [
   {
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
-    name: 'Arjun Sharma',
-    role: 'Club President',
-    linkedin: 'https://linkedin.com/in/arjun-sharma',
-    github: 'https://github.com/arjunsharma'
+    avatar: '/1.png',
+    name: 'Om Narkhede',
+    role: 'President',
+    linkedin: 'https://linkedin.com/in/om-narkhede',
+    github: 'https://github.com/omnarkhede'
   },
   {
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
-    name: 'Priya Patel',
-    role: 'Technical Lead',
-    linkedin: 'https://linkedin.com/in/priya-patel',
-    github: 'https://github.com/priyapatel'
+    avatar: '/2.jpg',
+    name: 'Shivam Murkute',
+    role: 'Vice President',
+    linkedin: 'https://linkedin.com/in/shivam-murkute',
+    github: 'https://github.com/shivammurkute'
   },
   {
-    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80',
-    name: 'Rahul Kumar',
-    role: 'Web Development Head',
-    linkedin: 'https://linkedin.com/in/rahul-kumar',
-    github: 'https://github.com/rahulkumar'
+    avatar: '/3.jpg',
+    name: 'Katrina Irom',
+    role: 'Secretary',
+    linkedin: 'https://linkedin.com/in/katrina-irom',
+    github: 'https://github.com/katrinairom'
   },
   {
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&auto=format&fit=crop&q=80',
-    name: 'Sneha Reddy',
-    role: 'AI/ML Lead',
-    linkedin: 'https://linkedin.com/in/sneha-reddy',
-    github: 'https://github.com/snehareddy'
+    avatar: '/4.png',
+    name: 'Sanskruti Kakade',
+    role: 'Treasurer',
+    linkedin: 'https://linkedin.com/in/sanskruti-kakade',
+    github: 'https://github.com/sanskrutikakade'
   },
   {
-    avatar: 'https://images.unsplash.com/photo-1522556189639-b150ed9c4330?w=400&auto=format&fit=crop&q=80',
-    name: 'Vikram Singh',
-    role: 'Mobile App Lead',
-    linkedin: 'https://linkedin.com/in/vikram-singh',
-    github: 'https://github.com/vikramsingh'
+    avatar: '/5.jpg',
+    name: 'Aayush Jaju',
+    role: 'Technical Head',
+    linkedin: 'https://linkedin.com/in/aayush-jaju',
+    github: 'https://github.com/aayushjaju'
   },
   {
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
-    name: 'Ananya Joshi',
-    role: 'Events Coordinator',
-    linkedin: 'https://linkedin.com/in/ananya-joshi',
-    github: 'https://github.com/ananyajoshi'
+    avatar: '/6.jpg',
+    name: 'Harshada Misal',
+    role: 'Creativity and Public Relations Head',
+    linkedin: 'https://linkedin.com/in/harshada-misal',
+    github: 'https://github.com/harshadamisal'
   },
   {
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-    name: 'Karthik Rao',
-    role: 'DevOps Lead',
-    linkedin: 'https://linkedin.com/in/karthik-rao',
-    github: 'https://github.com/karthikrao'
+    avatar: '/7.jpg',
+    name: 'Swayam Polakhare',
+    role: 'Creativity and Public Relations and Technical Co-Head',
+    linkedin: 'https://linkedin.com/in/swayam-polakhare',
+    github: 'https://github.com/swayampolakhare'
   },
   {
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80',
-    name: 'Ishita Gupta',
-    role: 'UI/UX Designer',
-    linkedin: 'https://linkedin.com/in/ishita-gupta',
-    github: 'https://github.com/ishitagupta'
+    avatar: '/8.jpg',
+    name: 'Swaraj Singh',
+    role: 'Social Media Head',
+    linkedin: 'https://linkedin.com/in/swaraj-singh',
+    github: 'https://github.com/swarajsingh'
+  },
+  {
+    avatar: '/9.jpg',
+    name: 'Karan Sathe',
+    role: 'Marketing Head',
+    linkedin: 'https://linkedin.com/in/karan-sathe',
+    github: 'https://github.com/karansathe'
+  },
+  {
+    avatar: '/10.jpg',
+    name: 'Harshal Patil',
+    role: 'Event Coordinator Head',
+    linkedin: 'https://linkedin.com/in/harshal-patil',
+    github: 'https://github.com/harshalpatil'
+  },
+  {
+    avatar: '/11.jpg',
+    name: 'Mayank Tiwari',
+    role: 'Event Coordinator Co-Head',
+    linkedin: 'https://linkedin.com/in/mayank-tiwari',
+    github: 'https://github.com/mayanktiwari'
   },
 ];
 
@@ -79,28 +130,63 @@ export function TeamCard({
 }: React.ComponentProps<'div'> & { member: TeamMember; index: number }) {
   return (
     <motion.div 
-      className={cn('p-6 rounded-xl overflow-hidden text-center', className)} 
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      className={cn('p-6 rounded-xl overflow-hidden text-center relative', className)} 
+      initial={{ 
+        opacity: 0, 
+        x: index % 2 === 0 ? -100 : 100,
+        y: 50,
+        scale: 0.8
+      }}
+      animate={{ 
+        opacity: 1, 
+        x: 0,
+        y: 0,
+        scale: 1
+      }}
       transition={{ 
-        duration: 0.6, 
-        delay: index * 0.1,
+        duration: 0.8, 
+        delay: 0.8 + (index * 0.1),
         type: "spring",
-        stiffness: 260,
-        damping: 20
+        stiffness: 100,
+        damping: 15
       }}
       whileHover={{ 
         scale: 1.05,
         y: -10,
+        x: index % 2 === 0 ? 5 : -5,
         transition: { duration: 0.2 }
       }}
       {...props}
     >
-      {/* Profile Image - Made Smaller */}
+      {/* Enhanced glassmorphism card background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-md"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-transparent to-purple-500/5"></div>
+      
+      {/* Twinkling stars animation */}
+      <div className="absolute top-3 right-4 w-1 h-1 bg-white/80 rounded-full animate-pulse">
+        <div className="absolute inset-0 animate-ping bg-white/60 rounded-full"></div>
+      </div>
+      <div className="absolute bottom-6 left-3 w-0.5 h-0.5 bg-cyan-400/90 rounded-full animate-pulse" style={{animationDelay: '1s'}}>
+        <div className="absolute inset-0 animate-ping bg-cyan-400/70 rounded-full" style={{animationDelay: '1s'}}></div>
+      </div>
+      <div className="absolute top-1/3 left-2 w-0.5 h-0.5 bg-purple-400/80 rounded-full animate-pulse" style={{animationDelay: '2s'}}>
+        <div className="absolute inset-0 animate-ping bg-purple-400/60 rounded-full" style={{animationDelay: '2s'}}></div>
+      </div>
+      <div className="absolute top-1/4 right-2 w-0.5 h-0.5 bg-white/70 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}>
+        <div className="absolute inset-0 animate-ping bg-white/50 rounded-full" style={{animationDelay: '0.5s'}}></div>
+      </div>
+      <div className="absolute bottom-1/3 right-6 w-1 h-1 bg-cyan-300/80 rounded-full animate-pulse" style={{animationDelay: '1.5s'}}>
+        <div className="absolute inset-0 animate-ping bg-cyan-300/60 rounded-full" style={{animationDelay: '1.5s'}}></div>
+      </div>
+      {/* Profile Image - Clean and Simple */}
       <div className="relative mb-4">
         <motion.div
-          className="w-24 h-24 mx-auto rounded-full overflow-hidden border-3 border-gradient-to-r from-cyan-400 to-purple-500"
-          whileHover={{ rotate: 360 }}
+          className="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-white/30 shadow-lg relative"
+          whileHover={{ 
+            rotate: 360,
+            scale: 1.1,
+            boxShadow: "0 0 30px rgba(34, 211, 238, 0.3)"
+          }}
           transition={{ duration: 0.6 }}
         >
           <img
@@ -109,21 +195,30 @@ export function TeamCard({
             width={96}
             height={96}
             className="w-full h-full object-cover"
+            style={{
+              filter: `
+                contrast(1.2) 
+                saturate(1.3) 
+                brightness(1.0)
+              `.trim(),
+              transform: 'scale(1.3)',
+              objectPosition: 'center'
+            }}
           />
         </motion.div>
         
-        {/* Glow effect around image */}
+        {/* Simple outer glow effect */}
         <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-cyan-400/20 to-purple-500/20 blur-md -z-10"></div>
       </div>
 
       {/* Member Info */}
-      <div className="space-y-2">
+      <div className="relative z-10 space-y-2">
         <h3 className="text-lg font-semibold text-white">{member.name}</h3>
         <p className="text-cyan-400 font-medium text-sm">{member.role}</p>
       </div>
 
       {/* Social Media Icons */}
-      <div className="flex justify-center space-x-4 mt-4">
+      <div className="relative z-10 flex justify-center space-x-4 mt-4">
         {member.linkedin && (
           <motion.a
             href={member.linkedin}
@@ -172,9 +267,9 @@ const Team = () => {
         <section className="py-20 px-4">
           <div className="max-w-7xl mx-auto text-center">
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8 }}
+              initial={{ opacity: 0, x: -100 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
             >
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
                 Meet Our{' '}
@@ -182,36 +277,56 @@ const Team = () => {
                   Team
                 </span>
               </h1>
-              <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-                Passionate developers, designers, and innovators driving BVCodeVerse forward
-              </p>
             </motion.div>
+            <motion.p 
+              className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, type: "spring", stiffness: 100 }}
+            >
+              Passionate developers, designers, and innovators driving BVCodeVerse forward
+            </motion.p>
           </div>
         </section>
 
         {/* Team Grid */}
-        <section className="py-20 px-4">
+        <motion.section 
+          className="py-20 px-4"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+        >
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6">
+            <motion.div 
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6"
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
               {TEAM_MEMBERS.map((member, index) => (
                 <TeamCard
-                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 relative"
+                  className="bg-black/20 backdrop-blur-lg border border-white/10 relative shadow-xl hover:shadow-2xl hover:shadow-cyan-400/10 transition-all duration-300"
                   key={index}
                   member={member}
                   index={index}
                 />
               ))}
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
         
         {/* Static team info section */}
-        <section className="py-20 px-4">
+        <motion.section 
+          className="py-20 px-4"
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+        >
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: -50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ duration: 0.6, delay: 1.0 }}
             >
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
                 Join Our Growing Community
@@ -223,7 +338,12 @@ const Team = () => {
               </p>
             </motion.div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+            <motion.div 
+              className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.2 }}
+            >
               {[
                 { number: '50+', label: 'Core Members' },
                 { number: '10+', label: 'Leadership Team' },
@@ -232,9 +352,9 @@ const Team = () => {
                 <motion.div 
                   key={index}
                   className="text-center"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                  initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.5, delay: 1.4 + index * 0.1 }}
                 >
                   <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 mb-2">
                     {stat.number}
@@ -242,9 +362,9 @@ const Team = () => {
                   <p className="text-gray-400">{stat.label}</p>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
       </div>
     </Layout>
   );

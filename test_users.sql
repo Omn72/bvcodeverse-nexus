@@ -1,0 +1,161 @@
+-- Test data for user_profiles table
+INSERT INTO user_profiles (
+  user_id,
+  full_name,
+  phone,
+  location,
+  bio,
+  github,
+  linkedin,
+  college,
+  year,
+  branch,
+  skills,
+  created_at,
+  updated_at
+) VALUES 
+(
+  'test-user-1',
+  'Arjun Sharma',
+  '+91-9876543210',
+  'Mumbai, Maharashtra',
+  'Full-stack developer passionate about React and Node.js. Love building scalable web applications.',
+  'https://github.com/arjunsharma',
+  'https://linkedin.com/in/arjunsharma',
+  'Bharati Vidyapeeth College of Engineering',
+  '3rd Year',
+  'Computer Science Engineering',
+  '["React", "Node.js", "JavaScript", "Python", "MongoDB"]',
+  NOW(),
+  NOW()
+),
+(
+  'test-user-2',
+  'Priya Patel',
+  '+91-9876543211',
+  'Pune, Maharashtra',
+  'UI/UX Designer and Frontend Developer. Creating beautiful and user-friendly interfaces.',
+  'https://github.com/priyapatel',
+  'https://linkedin.com/in/priyapatel',
+  'Bharati Vidyapeeth College of Engineering',
+  '2nd Year',
+  'Information Technology',
+  '["UI/UX Design", "React", "Figma", "CSS", "JavaScript"]',
+  NOW(),
+  NOW()
+),
+(
+  'test-user-3',
+  'Rahul Singh',
+  '+91-9876543212',
+  'Delhi, India',
+  'Machine Learning enthusiast and Python developer. Working on AI projects.',
+  'https://github.com/rahulsingh',
+  'https://linkedin.com/in/rahulsingh',
+  'Bharati Vidyapeeth College of Engineering',
+  '4th Year',
+  'Computer Science Engineering',
+  '["Python", "Machine Learning", "TensorFlow", "Data Science", "AI"]',
+  NOW(),
+  NOW()
+),
+(
+  'test-user-4',
+  'Sneha Gupta',
+  '+91-9876543213',
+  'Bangalore, Karnataka',
+  'Mobile app developer specializing in React Native and Flutter.',
+  'https://github.com/snehagupta',
+  'https://linkedin.com/in/snehagupta',
+  'Bharati Vidyapeeth College of Engineering',
+  '3rd Year',
+  'Computer Science Engineering',
+  '["React Native", "Flutter", "Dart", "JavaScript", "Firebase"]',
+  NOW(),
+  NOW()
+),
+(
+  'test-user-5',
+  'Vikash Kumar',
+  '+91-9876543214',
+  'Hyderabad, Telangana',
+  'DevOps engineer and cloud enthusiast. Love automating everything!',
+  'https://github.com/vikashkumar',
+  'https://linkedin.com/in/vikashkumar',
+  'Bharati Vidyapeeth College of Engineering',
+  '4th Year',
+  'Information Technology',
+  '["DevOps", "AWS", "Docker", "Kubernetes", "CI/CD"]',
+  NOW(),
+  NOW()
+);
+
+-- Test data for user_stats table
+INSERT INTO user_stats (
+  user_id,
+  total_points,
+  rank,
+  level,
+  projects_completed,
+  contests_won,
+  badges_earned,
+  streak_days,
+  next_level_points,
+  created_at,
+  updated_at
+) VALUES 
+(
+  'test-user-1',
+  1250,
+  1,
+  'Senior Developer',
+  15,
+  3,
+  8,
+  45,
+  1500
+),
+(
+  'test-user-2',
+  890,
+  2,
+  'Intermediate',
+  12,
+  2,
+  6,
+  30,
+  1000
+),
+(
+  'test-user-3',
+  1450,
+  1,
+  'Expert',
+  18,
+  4,
+  10,
+  60,
+  2000
+),
+(
+  'test-user-4',
+  720,
+  3,
+  'Intermediate',
+  10,
+  1,
+  5,
+  25,
+  1000
+),
+(
+  'test-user-5',
+  980,
+  2,
+  'Advanced',
+  14,
+  2,
+  7,
+  35,
+  1000
+);
