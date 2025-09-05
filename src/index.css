@@ -1,42 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
+/* BVCodeVerse Design System - Futuristic Coding Theme */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Core Dark Theme */
+    --background: 220 13% 5%;
+    --foreground: 180 100% 90%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Card System */
+    --card: 220 15% 8%;
+    --card-foreground: 180 100% 88%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Popover */
+    --popover: 220 15% 8%;
+    --popover-foreground: 180 100% 88%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Neon Cyan Primary */
+    --primary: 180 100% 50%;
+    --primary-foreground: 220 13% 5%;
+    --primary-glow: 180 100% 60%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Electric Purple Secondary */
+    --secondary: 270 91% 65%;
+    --secondary-foreground: 220 13% 5%;
+    --secondary-glow: 270 91% 75%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Muted Tones */
+    --muted: 220 15% 15%;
+    --muted-foreground: 215 25% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Accent System */
+    --accent: 300 100% 60%;
+    --accent-foreground: 220 13% 5%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* States */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Borders & Inputs */
+    --border: 220 15% 20%;
+    --input: 220 15% 12%;
+    --ring: 180 100% 50%;
 
-    --radius: 0.5rem;
+    /* Design Elements */
+    --radius: 0.75rem;
+
+    /* Custom BVCodeVerse Tokens */
+    --code-bg: 220 15% 10%;
+    --code-border: 220 15% 25%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(180 100% 50%), hsl(270 91% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 13% 5%) 0%, hsl(220 15% 8%) 50%, hsl(220 13% 5%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(180 100% 50% / 0.2), transparent 70%);
+    
+    /* Shadows & Effects */
+    --shadow-neon: 0 0 20px hsl(180 100% 50% / 0.3);
+    --shadow-purple: 0 0 20px hsl(270 91% 65% / 0.3);
+    --shadow-card: 0 10px 30px hsl(220 13% 5% / 0.5);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-glow: box-shadow 0.3s ease-in-out, transform 0.2s ease-in-out;
 
     --sidebar-background: 0 0% 98%;
 
@@ -54,44 +83,6 @@ All colors MUST be HSL.
 
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
 }
 
 @layer base {
@@ -100,6 +91,131 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-inter font-bold tracking-tight;
+  }
+
+  code {
+    @apply font-mono;
+  }
+}
+
+@layer components {
+  /* Hero Gradient Background */
+  .hero-gradient {
+    background: var(--gradient-hero);
+    position: relative;
+  }
+
+  .hero-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--gradient-glow);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* Neon Glow Effects */
+  .glow-primary {
+    box-shadow: var(--shadow-neon);
+  }
+
+  .glow-secondary {
+    box-shadow: var(--shadow-purple);
+  }
+
+  /* Code Block Styling */
+  .code-block {
+    background: hsl(var(--code-bg));
+    border: 1px solid hsl(var(--code-border));
+    @apply rounded-lg font-mono text-sm;
+  }
+
+  /* Navigation Glow */
+  .nav-glow {
+    transition: var(--transition-glow);
+  }
+
+  .nav-glow:hover {
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* Gradient Text */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Button Variants */
+  .btn-neon {
+    background: var(--gradient-primary);
+    color: hsl(var(--primary-foreground));
+    border: 2px solid transparent;
+    transition: var(--transition-glow);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-neon:hover {
+    box-shadow: var(--shadow-neon);
+    transform: translateY(-2px);
+  }
+
+  .btn-neon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, hsl(180 100% 80% / 0.4), transparent);
+    transition: left 0.5s;
+  }
+
+  .btn-neon:hover::before {
+    left: 100%;
+  }
+
+  .btn-outline-neon {
+    background: transparent;
+    color: hsl(var(--primary));
+    border: 2px solid hsl(var(--primary));
+    transition: var(--transition-glow);
+  }
+
+  .btn-outline-neon:hover {
+    background: hsl(var(--primary) / 0.1);
+    box-shadow: var(--shadow-neon);
+    transform: translateY(-1px);
+  }
+}
+
+@layer utilities {
+  .text-shadow-glow {
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.8);
+  }
+
+  .border-glow {
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.3);
+  }
+
+  .font-inter {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
   }
 }
