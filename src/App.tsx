@@ -12,10 +12,12 @@ import Projects from "./pages/Projects";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import SimpleProfile from "./pages/SimpleProfile";
-import UserProfile from "./pages/UserProfile";
-import PublicProfile from "./pages/PublicProfile";
-import SearchTest from "./pages/SearchTest";
+import ContestApplication from "./pages/ContestApplication";
+import Contests from "./pages/Contests";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
+import DatabaseTest from "./pages/DatabaseTest";
+import AdminRoute from "./components/AdminRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -36,11 +38,15 @@ const App = () => (
             <Route path="/projects" element={<Projects />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/profile" element={<SimpleProfile />} />
-            <Route path="/search-test" element={<SearchTest />} />
-            <Route path="/user/:userId" element={<UserProfile />} />
-            <Route path="/:username" element={<PublicProfile />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/contest" element={<Contests />} />
+            <Route path="/apply-contest" element={<ContestApplication />} />
+            <Route path="/database-test" element={<DatabaseTest />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin/dashboard" element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

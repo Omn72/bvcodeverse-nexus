@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Code2, Menu, X, LogOut, User, ChevronDown } from 'lucide-react';
+import { Code2, Menu, X, LogOut, User, ChevronDown, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
@@ -18,6 +18,7 @@ const Navigation = () => {
   const navItems = [
     { name: 'Team', path: '/team' },
     { name: 'Events', path: '/events' },
+    { name: 'Contest', path: '/contest' },
     { name: 'Gallery', path: '/gallery' },
     { name: 'Projects', path: '/projects' },
   ];
@@ -113,13 +114,7 @@ const Navigation = () => {
               </Link>
             ))}
             
-            {/* Test button for debugging */}
-            <button 
-              onClick={() => alert('Test button works!')} 
-              className="text-yellow-400 text-sm px-2 py-1 border border-yellow-400 rounded"
-            >
-              Test
-            </button>
+            {/* debug test button removed */}
           </nav>
 
           {/* Desktop Auth Section */}
@@ -145,15 +140,15 @@ const Navigation = () => {
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-xl py-2 z-[9999]">
                     <Link 
-                      to="/profile"
+                      to="/apply-contest"
                       className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
                       onClick={() => {
-                        console.log('Profile link clicked');
+                        console.log('Apply for Contest link clicked');
                         setShowUserMenu(false);
                       }}
                     >
-                      <User className="w-4 h-4 mr-3" />
-                      Profile
+                      <FileText className="w-4 h-4 mr-3" />
+                      Apply for Contest
                     </Link>
                     <Link 
                       to="/dashboard"
@@ -235,12 +230,12 @@ const Navigation = () => {
                     </div>
                   </div>
                   <Link 
-                    to="/profile"
+                    to="/apply-contest"
                     className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors py-2"
                     onClick={() => setExpanded(false)}
                   >
-                    <User className="w-4 h-4" />
-                    <span>Profile</span>
+                    <FileText className="w-4 h-4" />
+                    <span>Apply for Contest</span>
                   </Link>
                   <Link 
                     to="/dashboard"

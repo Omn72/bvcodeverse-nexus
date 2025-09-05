@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
-import { getUserByUsername } from '../lib/supabase'
+import { getUserByUsername, upsertUserProfile } from '../lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 import { 
   User, 
   Mail, 
@@ -37,6 +38,7 @@ interface UserProfile {
   skills: string[]
   created_at: string
   updated_at: string
+  user_id?: string // Add user_id to interface
   user_stats?: {
     total_points: number
     rank: number
@@ -48,26 +50,46 @@ const PublicProfile: React.FC = () => {
   const { username } = useParams<{ username: string }>()
   const navigate = useNavigate()
   const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState<boolean>(!!username)
   const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
+  const [isOwner, setIsOwner] = useState(false)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [editState, setEditState] = useState<Partial<UserProfile>>({})
 
   useEffect(() => {
     if (username) {
-      loadUserProfile(username)
+  console.debug('PublicProfile useEffect - username param:', username)
+  loadUserProfile(username)
     }
   }, [username])
+
+  useEffect(() => {
+    // Determine ownership when profile loads and user is present
+    if (profile && user) {
+      const ownerId = profile.user_id || profile.id
+      setIsOwner(Boolean(ownerId && ownerId === user.id))
+    } else {
+      setIsOwner(false)
+    }
+  }, [profile, user])
 
   const loadUserProfile = async (username: string) => {
     try {
       setIsLoading(true)
       setError(null)
       
+      const start = Date.now()
       console.log('Loading profile for username:', username)
-      
-      const { data, error } = await getUserByUsername(username)
+
+      const result = await getUserByUsername(username)
+  // result should be { data, error }
+  console.debug('getUserByUsername raw result:', result)
+  const { data, error } = result as any
+  console.log(`getUserByUsername took ${Date.now() - start}ms for username: ${username}`)
 
       if (error) {
-        console.error('Error loading profile:', error)
+  console.error('Error loading profile:', error)
         setError('Profile not found')
         return
       }
@@ -79,12 +101,61 @@ const PublicProfile: React.FC = () => {
 
       setProfile(data)
       console.log('Loaded profile:', data)
+      setEditState({ ...data })
     } catch (err) {
       console.error('Error loading profile:', err)
       setError('Failed to load profile')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSavePublicProfile = async () => {
+    if (!profile || !user) return
+    
+    try {
+      setIsLoading(true)
+      
+      const payload: Partial<UserProfile> = {
+        username: editState.username || profile.username,
+        full_name: editState.full_name ?? profile.full_name,
+        bio: editState.bio ?? profile.bio,
+        college: editState.college ?? profile.college,
+        year: editState.year ?? profile.year,
+        branch: editState.branch ?? profile.branch,
+        github: editState.github ?? profile.github,
+        linkedin: editState.linkedin ?? profile.linkedin,
+      }
+      console.debug('handleSavePublicProfile payload:', payload)
+      setError(null)
+
+      const userId = profile.user_id || profile.id || user.id
+      const result = await upsertUserProfile(userId, payload)
+      console.debug('upsertUserProfile result:', result)
+
+      const data = (result as any)?.data
+      const error = (result as any)?.error
+
+      if (error) {
+        console.error('Failed to save public profile:', error)
+        const msg = (error && (error.message || error.msg || JSON.stringify(error))) || 'Failed to save profile'
+        setError(msg)
+        return
+      }
+
+      setProfile(data || { ...profile, ...payload })
+      setIsEditingProfile(false)
+    } catch (e) {
+      console.error('Save error:', e)
+      setError((e as any)?.message || 'Failed to save profile')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditingProfile(false)
+    setEditState({ ...profile })
   }
 
   // Loading state
@@ -151,7 +222,92 @@ const PublicProfile: React.FC = () => {
               {profile.full_name || profile.username}
             </h1>
             <p className="text-xl text-cyan-400 mb-2">@{profile.username}</p>
-            <p className="text-gray-400 max-w-2xl mx-auto">
+            
+            {/* Owner Controls */}
+            {isOwner && (
+              <div className="mt-4">
+                {!isEditingProfile ? (
+                  <button
+                    onClick={() => setIsEditingProfile(true)}
+                    className="inline-flex items-center px-4 py-2 bg-yellow-500 text-black font-semibold rounded-lg hover:bg-yellow-600 transition-all"
+                  >
+                    Edit Profile
+                  </button>
+                ) : (
+                  <div className="max-w-4xl mx-auto bg-gray-900/50 backdrop-blur-sm rounded-lg p-6 border border-gray-700">
+                    <h3 className="text-white text-lg font-semibold mb-4">Edit Profile</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <input
+                        value={editState.username || ''}
+                        onChange={(e) => setEditState({...editState, username: e.target.value})}
+                        className="bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none"
+                        placeholder="Username"
+                      />
+                      <input
+                        value={editState.full_name || ''}
+                        onChange={(e) => setEditState({...editState, full_name: e.target.value})}
+                        className="bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none"
+                        placeholder="Full name"
+                      />
+                      <input
+                        value={editState.college || ''}
+                        onChange={(e) => setEditState({...editState, college: e.target.value})}
+                        className="bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none"
+                        placeholder="College"
+                      />
+                      <input
+                        value={editState.year || ''}
+                        onChange={(e) => setEditState({...editState, year: e.target.value})}
+                        className="bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none"
+                        placeholder="Year"
+                      />
+                      <input
+                        value={editState.branch || ''}
+                        onChange={(e) => setEditState({...editState, branch: e.target.value})}
+                        className="bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none"
+                        placeholder="Branch"
+                      />
+                      <input
+                        value={editState.github || ''}
+                        onChange={(e) => setEditState({...editState, github: e.target.value})}
+                        className="bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none"
+                        placeholder="GitHub URL"
+                      />
+                      <input
+                        value={editState.linkedin || ''}
+                        onChange={(e) => setEditState({...editState, linkedin: e.target.value})}
+                        className="bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none"
+                        placeholder="LinkedIn URL"
+                      />
+                    </div>
+                    <textarea
+                      value={editState.bio || ''}
+                      onChange={(e) => setEditState({...editState, bio: e.target.value})}
+                      className="w-full bg-gray-800 text-white rounded px-3 py-2 border border-gray-600 focus:border-cyan-400 focus:outline-none mb-4"
+                      placeholder="Bio"
+                      rows={3}
+                    />
+                    <div className="flex items-center justify-center gap-3">
+                      <button 
+                        onClick={handleSavePublicProfile} 
+                        className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Saving...' : 'Save'}
+                      </button>
+                      <button 
+                        onClick={handleCancelEdit} 
+                        className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <p className="text-gray-400 max-w-2xl mx-auto mt-4">
               {profile.bio || `${profile.year} student at ${profile.college}`}
             </p>
           </motion.div>

@@ -65,7 +65,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     github: 'https://github.com/katrinairom'
   },
   {
-    avatar: '/4.png',
+    avatar: '/4.jpg',
     name: 'Sanskruti Kakade',
     role: 'Treasurer',
     linkedin: 'https://linkedin.com/in/sanskruti-kakade',

@@ -38,27 +38,34 @@ const UserProfile = () => {
   useEffect(() => {
     const loadUserData = async () => {
       if (!userId) return
-
       setLoading(true)
       setError(null)
 
       try {
-        const [profileResponse, statsResponse] = await Promise.all([
-          getUserProfile(userId),
-          getUserStats(userId)
-        ])
+        // Fetch profile first so we can determine which id to use for stats
+        const profileResponse = await getUserProfile(userId)
 
-        if (profileResponse.error && profileResponse.error.code !== 'PGRST116') {
-          throw profileResponse.error
+        if (profileResponse.error) {
+          // If profile not found, surface a not found error
+          console.error('Profile fetch error:', profileResponse.error)
+          setError('User not found')
+          setLoading(false)
+          return
         }
 
-        if (statsResponse.error && statsResponse.error.code !== 'PGRST116') {
-          throw statsResponse.error
+        const profile = profileResponse.data
+        setUserProfile(profile)
+
+        // Determine stats id: prefer profile.user_id, fallback to profile.id or original userId
+        const statsId = (profile && (profile.user_id || (profile as any).id)) || userId
+        const statsResponse = await getUserStats(statsId)
+
+        if (statsResponse.error) {
+          console.warn('Stats fetch error:', statsResponse.error)
+          // Not fatal — continue without stats
+        } else {
+          setUserStats(statsResponse.data)
         }
-
-        setUserProfile(profileResponse.data)
-        setUserStats(statsResponse.data)
-
       } catch (err: any) {
         console.error('Error loading user data:', err)
         setError(err.message || 'Failed to load user profile')

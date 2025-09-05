@@ -1,5 +1,6 @@
-import { ArrowRight, Code, Users, Zap } from 'lucide-react';
+import { ArrowRight, Trophy, Clock, Gift, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const CTA = () => {
   return (
@@ -12,80 +13,84 @@ const CTA = () => {
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="space-y-8">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
-            <Zap className="h-4 w-4 text-primary mr-2" />
-            <span className="text-sm font-medium text-primary">Join the Movement</span>
+            <Trophy className="h-4 w-4 text-primary mr-2" />
+            <span className="text-sm font-medium text-primary">Contest Season Open</span>
           </div>
           
           <h2 className="text-4xl md:text-6xl font-bold">
-            Ready to <span className="gradient-text">Code</span> the Future?
+            Ready to <span className="gradient-text">Win</span> Big?
           </h2>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Join our community of passionate developers, innovators, and tech enthusiasts. 
-            Your journey to becoming an exceptional coder starts here.
+            Join our exciting coding contests and hackathons. Compete with fellow developers, 
+            showcase your skills, and win amazing prizes. Your next big victory awaits!
           </p>
 
-          {/* Benefits */}
+          {/* Contest Benefits */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-12 max-w-3xl mx-auto">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Code className="h-5 w-5 text-primary" />
+                <Trophy className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-foreground">Learn & Grow</div>
-                <div className="text-sm text-muted-foreground">Skill development</div>
+                <div className="font-semibold text-foreground">Win Prizes</div>
+                <div className="text-sm text-muted-foreground">Cash & rewards</div>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-secondary/10 rounded-lg flex items-center justify-center">
-                <Users className="h-5 w-5 text-secondary" />
+                <Clock className="h-5 w-5 text-secondary" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-foreground">Network</div>
-                <div className="text-sm text-muted-foreground">Build connections</div>
+                <div className="font-semibold text-foreground">48H Challenges</div>
+                <div className="text-sm text-muted-foreground">Fast-paced coding</div>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Zap className="h-5 w-5 text-primary" />
+                <Gift className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-foreground">Innovate</div>
-                <div className="text-sm text-muted-foreground">Create impact</div>
+                <div className="font-semibold text-foreground">Recognition</div>
+                <div className="text-sm text-muted-foreground">Build your portfolio</div>
               </div>
             </div>
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button className="btn-neon group px-8 py-6 text-lg font-semibold rounded-xl">
-              Join BVCodeVerse Now
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Button>
+            <Link to="/apply-contest">
+              <Button className="btn-neon group px-8 py-6 text-lg font-semibold rounded-xl">
+                Apply for Contest
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
             
-            <Button variant="outline" className="btn-outline-neon px-8 py-6 text-lg font-semibold rounded-xl">
-              Learn More
-            </Button>
+            <Link to="/contest">
+              <Button variant="outline" className="btn-outline-neon px-8 py-6 text-lg font-semibold rounded-xl">
+                View Contest Details
+              </Button>
+            </Link>
           </div>
 
-          {/* Trust Indicators */}
+          {/* Contest Statistics */}
           <div className="mt-12 text-center">
-            <p className="text-sm text-muted-foreground mb-4">Trusted by students and faculty</p>
+            <p className="text-sm text-muted-foreground mb-4">Current Contest Stats</p>
             <div className="flex justify-center items-center space-x-8 text-muted-foreground">
-              <div className="text-2xl font-bold gradient-text">200+</div>
+              <div className="text-2xl font-bold gradient-text">$5,000</div>
               <div className="w-px h-8 bg-border"></div>
-              <div className="text-2xl font-bold gradient-text">50+</div>
+              <div className="text-2xl font-bold gradient-text">48H</div>
               <div className="w-px h-8 bg-border"></div>
-              <div className="text-2xl font-bold gradient-text">4.9★</div>
+              <div className="text-2xl font-bold gradient-text">150+</div>
             </div>
             <div className="flex justify-center items-center space-x-8 text-xs text-muted-foreground mt-2">
-              <span>Members</span>
+              <span>Prize Pool</span>
               <span></span>
-              <span>Projects</span>
+              <span>Duration</span>
               <span></span>
-              <span>Rating</span>
+              <span>Participants</span>
             </div>
           </div>
         </div>

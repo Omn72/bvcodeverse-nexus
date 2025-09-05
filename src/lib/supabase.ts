@@ -34,8 +34,40 @@ export interface UserStats {
   updated_at?: string
 }
 
+// Contest Types
+export interface Contest {
+  id: string
+  title: string
+  description: string
+  category: string
+  prize_pool: string
+  duration: string
+  max_team_size: number
+  deadline: string
+  status: 'Draft' | 'Open' | 'Closed'
+  created_at?: string
+  updated_at?: string
+  created_by?: string
+}
+
+export interface ContestApplication {
+  id: string
+  contest_id: string
+  user_id: string
+  applicant_name: string
+  applicant_email: string
+  project_name: string
+  project_description: string
+  tech_stack: string
+  github_link?: string
+  demo_link?: string
+  team_members?: string
+  status: 'Pending' | 'Approved' | 'Rejected'
+  created_at?: string
+  updated_at?: string
+}
+
 // Replace these with your actual Supabase URL and anon key
-// You can find these in your Supabase project settings
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -99,6 +131,16 @@ export const getUserProfile = async (userId: string) => {
     .eq('user_id', userId)
     .single()
   
+  return { data, error }
+}
+
+export const getUserProfileById = async (id: string) => {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', id)
+    .single()
+
   return { data, error }
 }
 
@@ -201,6 +243,34 @@ export const getAllUserStats = async () => {
   return { data, error }
 }
 
+// Get user profile by username for public profiles
+export const getUserByUsername = async (username: string) => {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('username', username.toLowerCase())
+    .single()
+
+  if (error || !data) {
+    return { data: null, error }
+  }
+
+  // Get stats for the user
+  const { data: stats } = await supabase
+    .from('user_stats')
+    .select('total_points, rank, level')
+    .eq('user_id', data.user_id || data.id)
+    .single()
+
+  return {
+    data: {
+      ...data,
+      user_stats: stats || { total_points: 0, rank: 0, level: 1 }
+    },
+    error: null
+  }
+}
+
 // Search Functions
 export const searchUsers = async (query: string, limit: number = 10) => {
   try {
@@ -208,19 +278,11 @@ export const searchUsers = async (query: string, limit: number = 10) => {
     
     let queryBuilder = supabase
       .from('user_profiles')
-      .select(`
-        *,
-        user_stats (
-          total_points,
-          rank,
-          level
-        )
-      `)
+      .select('*')
       .not('full_name', 'is', null)
       .limit(limit)
 
     if (query && query.trim()) {
-      // Search by username, full name, college, bio, and skills
       queryBuilder = queryBuilder.or(
         `username.ilike.%${query}%,full_name.ilike.%${query}%,college.ilike.%${query}%,bio.ilike.%${query}%`
       )
@@ -228,13 +290,33 @@ export const searchUsers = async (query: string, limit: number = 10) => {
 
     queryBuilder = queryBuilder.order('updated_at', { ascending: false })
     
-    const { data, error } = await queryBuilder
+    const { data: profilesData, error } = await queryBuilder
     
-    console.log('Search results:', { data, error })
-    return { data, error }
+    if (error) {
+      console.error('Search error:', error)
+      return { data: [], error }
+    }
+
+    const profilesWithStats = await Promise.all(
+      (profilesData || []).map(async (profile) => {
+        const { data: stats } = await supabase
+          .from('user_stats')
+          .select('total_points, rank, level')
+          .eq('user_id', profile.id)
+          .single()
+        
+        return {
+          ...profile,
+          user_stats: stats || { total_points: 0, rank: 0, level: 1 }
+        }
+      })
+    )
+    
+    console.log('Search results:', { data: profilesWithStats, error: null })
+    return { data: profilesWithStats, error: null }
   } catch (err) {
     console.error('Search error:', err)
-    return { data: null, error: err }
+    return { data: [], error: err }
   }
 }
 
@@ -242,34 +324,45 @@ export const getRecentUsers = async (limit: number = 6) => {
   try {
     console.log('Getting recent users, limit:', limit)
     
-    const { data, error } = await supabase
+    const { data: profilesData, error } = await supabase
       .from('user_profiles')
-      .select(`
-        *,
-        user_stats (
-          total_points,
-          rank,
-          level
-        )
-      `)
-      .not('username', 'is', null)
+      .select('*')
+      .not('full_name', 'is', null)
+      .order('created_at', { ascending: false })
       .limit(limit)
-      .order('updated_at', { ascending: false })
     
-    console.log('Recent users result:', { data, error })
-    return { data, error }
+    if (error) {
+      console.error('Error fetching recent users:', error)
+      return { data: [], error }
+    }
+
+    const profilesWithStats = await Promise.all(
+      (profilesData || []).map(async (profile) => {
+        const { data: stats } = await supabase
+          .from('user_stats')
+          .select('total_points, rank, level')
+          .eq('user_id', profile.id)
+          .single()
+        
+        return {
+          ...profile,
+          user_stats: stats || { total_points: 0, rank: 0, level: 1 }
+        }
+      })
+    )
+    
+    console.log('Recent users result:', { data: profilesWithStats, error: null })
+    return { data: profilesWithStats, error: null }
   } catch (err) {
-    console.error('Get recent users error:', err)
-    return { data: null, error: err }
+    console.error('Error getting recent users:', err)
+    return { data: [], error: err }
   }
 }
 
 // Helper function to generate unique username
 const generateUniqueUsername = async (email: string, userId: string) => {
-  // Start with email prefix
   let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '')
   
-  // Fallback to user ID prefix if email username is too short
   if (baseUsername.length < 3) {
     baseUsername = `user${userId.substring(0, 8)}`
   }
@@ -277,8 +370,7 @@ const generateUniqueUsername = async (email: string, userId: string) => {
   let username = baseUsername
   let counter = 1
   
-  // Check if username exists and increment until unique
-  while (counter < 100) { // Prevent infinite loop
+  while (counter < 100) {
     const { data: existing } = await supabase
       .from('user_profiles')
       .select('username')
@@ -293,7 +385,6 @@ const generateUniqueUsername = async (email: string, userId: string) => {
     counter++
   }
   
-  // Final fallback with timestamp
   return `${baseUsername}${Date.now().toString().slice(-4)}`
 }
 
@@ -302,11 +393,9 @@ export const initializeUserAccount = async (userId: string, email: string) => {
   try {
     console.log('Initializing user account for:', userId, email)
     
-    // Generate unique username
     const username = await generateUniqueUsername(email, userId)
     console.log('Generated username:', username)
     
-    // Create default profile
     const profileData = {
       user_id: userId,
       username: username,
@@ -331,12 +420,10 @@ export const initializeUserAccount = async (userId: string, email: string) => {
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
-      // Don't fail completely, just log the error
     } else {
       console.log('Profile created/updated:', profileResult)
     }
 
-    // Create default stats
     const statsData = {
       user_id: userId,
       total_points: 0,
@@ -344,7 +431,7 @@ export const initializeUserAccount = async (userId: string, email: string) => {
       level: 'New Member',
       projects_completed: 0,
       contests_won: 0,
-      badges_earned: 1, // First login badge
+      badges_earned: 1,
       streak_days: 0,
       next_level_points: 100,
       created_at: new Date().toISOString(),
@@ -358,7 +445,6 @@ export const initializeUserAccount = async (userId: string, email: string) => {
 
     if (statsError) {
       console.error('Error creating stats:', statsError)
-      // Don't fail completely, just log the error
     } else {
       console.log('Stats created/updated:', statsResult)
     }
@@ -370,33 +456,170 @@ export const initializeUserAccount = async (userId: string, email: string) => {
   }
 }
 
-// Get user profile by username for public profiles
-export const getUserByUsername = async (username: string) => {
-  try {
-    console.log('Getting user by username:', username)
-    
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select(`
-        *,
-        user_stats (
-          total_points,
-          rank,
-          level
-        )
-      `)
-      .eq('username', username)
-      .single()
-    
-    console.log('User profile result:', { data, error })
-    return { data, error }
-  } catch (err) {
-    console.error('Error getting user by username:', err)
-    return { data: null, error: err }
-  }
+// Contest Management Functions
+export const createContest = async (contestData: Omit<Contest, 'id' | 'created_at' | 'updated_at'>) => {
+  const { data, error } = await supabase
+    .from('contests')
+    .insert({
+      ...contestData,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+  
+  return { data, error }
 }
 
-// Generate profile URL for a user
-export const getProfileUrl = (username: string) => {
-  return `/${username}`
+export const getAllContests = async () => {
+  const { data, error } = await supabase
+    .from('contests')
+    .select('*')
+    .order('created_at', { ascending: false })
+  
+  return { data, error }
+}
+
+export const getActiveContests = async () => {
+  const { data, error } = await supabase
+    .from('contests')
+    .select('*')
+    .eq('status', 'Open')
+    .order('created_at', { ascending: false })
+  
+  return { data, error }
+}
+
+export const updateContest = async (contestId: string, updates: Partial<Contest>) => {
+  const { data, error } = await supabase
+    .from('contests')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', contestId)
+    .select()
+    .single()
+  
+  return { data, error }
+}
+
+export const deleteContest = async (contestId: string) => {
+  const { data, error } = await supabase
+    .from('contests')
+    .delete()
+    .eq('id', contestId)
+  
+  return { data, error }
+}
+
+// Contest Application Functions
+export const submitContestApplication = async (applicationData: Omit<ContestApplication, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
+  const { data, error } = await supabase
+    .from('contest_applications')
+    .insert({
+      ...applicationData,
+      status: 'Pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single()
+  
+  return { data, error }
+}
+
+export const getAllApplications = async () => {
+  const { data, error } = await supabase
+    .from('contest_applications')
+    .select(`
+      *,
+      contests (
+        title,
+        category,
+        prize_pool
+      )
+    `)
+    .order('created_at', { ascending: false })
+  
+  return { data, error }
+}
+
+export const getApplicationsByContest = async (contestId: string) => {
+  const { data, error } = await supabase
+    .from('contest_applications')
+    .select('*')
+    .eq('contest_id', contestId)
+    .order('created_at', { ascending: false })
+  
+  return { data, error }
+}
+
+export const getApplicationsByUser = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('contest_applications')
+    .select(`
+      *,
+      contests (
+        title,
+        category,
+        status,
+        deadline
+      )
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  
+  return { data, error }
+}
+
+export const updateApplicationStatus = async (applicationId: string, status: ContestApplication['status']) => {
+  const { data, error } = await supabase
+    .from('contest_applications')
+    .update({
+      status,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', applicationId)
+    .select()
+    .single()
+  
+  return { data, error }
+}
+
+// Admin Authentication (for demo purposes - in production, use proper admin roles)
+export const adminSignIn = async (username: string, password: string) => {
+  // In production, this should be handled with proper admin roles and policies
+  if (username === 'AdminOm' && password === 'BVCodeVerse@strong') {
+    return { data: { user: { username: 'AdminOm', role: 'admin' } }, error: null }
+  }
+  return { data: null, error: { message: 'Invalid admin credentials' } }
+}
+
+// Contest Statistics
+export const getContestStats = async () => {
+  const { data: contests, error: contestError } = await supabase
+    .from('contests')
+    .select('id, status, prize_pool')
+
+  if (contestError) return { data: null, error: contestError }
+
+  const { data: applications, error: appError } = await supabase
+    .from('contest_applications')
+    .select('id, status')
+
+  if (appError) return { data: null, error: appError }
+
+  const stats = {
+    totalContests: contests?.length || 0,
+    activeContests: contests?.filter(c => c.status === 'Open').length || 0,
+    totalApplications: applications?.length || 0,
+    pendingApplications: applications?.filter(a => a.status === 'Pending').length || 0,
+    totalPrizePool: contests?.reduce((sum, contest) => {
+      const prize = parseInt(contest.prize_pool.replace(/[$,]/g, '') || '0')
+      return sum + prize
+    }, 0) || 0
+  }
+
+  return { data: stats, error: null }
 }

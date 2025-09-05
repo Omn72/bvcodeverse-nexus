@@ -58,8 +58,11 @@ const Hero = () => {
     loadSuggestedUsers();
   }, []);
 
-  const handleUserClick = (userId: string) => {
-    navigate(`/user/${userId}`);
+  const handleUserClick = (userIdOrObj: any) => {
+    // If passed a profile object, prefer user_id/id; otherwise use the string id
+    const id = typeof userIdOrObj === 'object' ? (userIdOrObj.user_id || userIdOrObj.id) : userIdOrObj
+    // Navigate to internal ID-based profile route
+    navigate(`/user/id/${id}`);
     setShowResults(false);
     setSearchQuery('');
   };
@@ -121,8 +124,8 @@ const Hero = () => {
                     )}
                     {searchResults.map((user, index) => (
                       <div
-                        key={user.user_id || index}
-                        onClick={() => handleUserClick(user.user_id)}
+                        key={user.user_id || user.id || user.username || index}
+                        onClick={() => handleUserClick(user)}
                         className="flex items-center p-4 hover:bg-gray-800 cursor-pointer transition-colors border-b border-gray-800 last:border-b-0"
                       >
                         <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center text-black font-bold text-sm mr-3">
