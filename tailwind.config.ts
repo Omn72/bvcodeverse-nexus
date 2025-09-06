@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 export default {
+	/* Bundler mode */
 	darkMode: ["class"],
 	content: [
 		"./pages/**/*.{ts,tsx}",
