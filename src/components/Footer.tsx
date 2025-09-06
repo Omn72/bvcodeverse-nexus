@@ -23,11 +23,12 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <Link to="/" className="flex items-center space-x-2">
-              <div className="relative">
-                <Code2 className="h-8 w-8 text-primary" />
-                <div className="absolute inset-0 bg-primary/20 blur-xl opacity-50" />
-              </div>
-              <span className="font-bold text-xl gradient-text">BVCodeVerse</span>
+              <img 
+                src="/logo.png" 
+                alt="BVCodeVerse Logo" 
+                className="h-32 w-32 object-contain filter brightness-2"
+              />
+              <span className="font-bold text-xl gradient-text"></span>
             </Link>
             <p className="text-muted-foreground leading-relaxed max-w-xs">
               Empowering the next generation of coders through collaboration, innovation, and continuous learning.
@@ -79,26 +80,26 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-sm">College Campus, Tech Building</span>
+                <span className="text-sm">Bharati Vidyapeeth College Of Engineering Lavale Pune</span>
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-sm">hello@bvcodeverse.edu</span>
+                <span className="text-sm">bvcodeverse@outlook.com</span>
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Phone className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-sm">+1 (555) 123-4567</span>
+                <span className="text-sm">+91 8999603334 Harshal Patil (Event Co-ordinator Head)</span>
               </div>
             </div>
 
             {/* Join CTA */}
             <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
-              <h4 className="font-semibold text-foreground mb-2">Ready to Join?</h4>
+              <h4 className="font-semibold text-foreground mb-2">Drop Your Feedback</h4>
               <p className="text-sm text-muted-foreground mb-3">
-                Start your coding journey with us today.
+                We're listening 👂🏼. Share your thoughts
               </p>
               <button className="w-full btn-neon px-4 py-2 rounded-lg text-sm font-medium">
-                Join BVCodeVerse
+                FeedBack
               </button>
             </div>
           </div>
@@ -108,7 +109,24 @@ const Footer = () => {
         <div className="pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
             <div className="text-sm text-muted-foreground">
-              © 2024 BVCodeVerse. All rights reserved.
+              © 2025{' '}
+              <a 
+                href="https://bvcoe.bharatividyapeeth.edu/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors cursor-pointer underline"
+              >
+                BVCOEL
+              </a>
+                . All rights reserved. Designed & Developed by{' '}
+              <a 
+                href="https://www.linkedin.com/in/omnarkhede/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-primary transition-colors cursor-pointer underline"
+              >
+                Om Narkhede
+              </a>
             </div>
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getAllContests, createContest, type Contest } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import Layout from '@/components/Layout';
 
 const DatabaseTest = () => {
   const [status, setStatus] = useState<'testing' | 'connected' | 'error'>('testing');
@@ -68,15 +69,16 @@ const DatabaseTest = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center">
-          Database Connection Test
-        </h1>
+    <Layout>
+      <div className="min-h-screen bg-black text-white p-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-4xl font-bold mb-8 text-center">
+            Database Connection Test
+          </h1>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4">Connection Status</h2>
-          <div className="mb-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-bold mb-4">Connection Status</h2>
+            <div className="mb-4">
             <div className={`inline-block px-3 py-1 rounded text-sm font-medium ${
               status === 'testing' ? 'bg-yellow-500 text-black' :
               status === 'connected' ? 'bg-green-500 text-white' :
@@ -132,6 +134,7 @@ const DatabaseTest = () => {
         )}
       </div>
     </div>
+    </Layout>
   );
 };
 

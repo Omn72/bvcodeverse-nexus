@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import Layout from '@/components/Layout';
 import { 
   Plus, 
   Trophy, 
@@ -672,16 +673,17 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <div className="bg-gray-900 border-b border-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg flex items-center justify-center mr-3">
-                <Settings className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold">Admin Dashboard</h1>
+    <Layout>
+      <div className="min-h-screen bg-black text-white">
+        {/* Header */}
+        <div className="bg-gray-900 border-b border-gray-800">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-red-500 to-orange-500 rounded-lg flex items-center justify-center mr-3">
+                  <Settings className="w-5 h-5 text-white" />
+                </div>
+                <h1 className="text-xl font-bold">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
               {/* INSTANT MODE TOGGLE */}
@@ -1038,6 +1040,7 @@ const AdminDashboard = () => {
       {showAddContest && <AddContestForm />}
       {showApplications && selectedContest && <ApplicationsModal contest={selectedContest} />}
     </div>
+    </Layout>
   );
 };
 

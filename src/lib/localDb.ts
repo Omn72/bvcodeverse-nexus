@@ -38,7 +38,25 @@ export const getActiveContestsLocal = (): Contest[] => {
 }
 
 // INSTANT Application Functions
+export const checkExistingApplication = (userId: string, contestId: string): ContestApplication | null => {
+  const applications = getApplicationsLocal()
+  return applications.find(app => app.user_id === userId && app.contest_id === contestId) || null
+}
+
 export const submitApplicationLocal = (appData: Omit<ContestApplication, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
+  // Check for existing application
+  const existingApp = checkExistingApplication(appData.user_id, appData.contest_id)
+  if (existingApp) {
+    return { 
+      data: null, 
+      error: { 
+        message: 'You have already submitted an application for this contest',
+        code: 'DUPLICATE_APPLICATION',
+        existingApplication: existingApp
+      } 
+    }
+  }
+
   const applications = getApplicationsLocal()
   const newApp: ContestApplication = {
     ...appData,
@@ -98,6 +116,45 @@ export const initializeLocalData = () => {
     ]
     localStorage.setItem(CONTESTS_KEY, JSON.stringify(sampleContests))
   }
+
+  // Add sample applications for testing profile functionality
+  if (getApplicationsLocal().length === 0) {
+    const sampleApplications: ContestApplication[] = [
+      {
+        id: generateId(),
+        contest_id: getContestsLocal()[0]?.id || 'sample-contest-1',
+        user_id: 'sample-user-id', // This would be replaced with actual user ID
+        applicant_name: 'John Doe',
+        applicant_email: 'john.doe@example.com',
+        project_name: 'E-Commerce Platform',
+        project_description: 'A modern e-commerce platform with React, Node.js, and MongoDB. Features include user authentication, product catalog, shopping cart, and payment integration.',
+        tech_stack: 'React, Node.js, MongoDB, Stripe API',
+        github_link: 'https://github.com/johndoe/ecommerce-platform',
+        demo_link: 'https://ecommerce-demo.com',
+        team_members: 'John Doe (Lead Developer), Jane Smith (UI/UX Designer)',
+        status: 'Pending',
+        created_at: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+        updated_at: new Date(Date.now() - 86400000).toISOString()
+      },
+      {
+        id: generateId(),
+        contest_id: getContestsLocal()[1]?.id || 'sample-contest-2',
+        user_id: 'sample-user-id',
+        applicant_name: 'John Doe',
+        applicant_email: 'john.doe@example.com',
+        project_name: 'AI Code Review Assistant',
+        project_description: 'An AI-powered tool that automatically reviews code for bugs, security vulnerabilities, and best practices using machine learning models.',
+        tech_stack: 'Python, TensorFlow, FastAPI, Docker',
+        github_link: 'https://github.com/johndoe/ai-code-reviewer',
+        demo_link: '',
+        team_members: 'John Doe (ML Engineer), Mike Johnson (Backend Developer), Sarah Wilson (DevOps)',
+        status: 'Approved',
+        created_at: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+        updated_at: new Date(Date.now() - 86400000).toISOString()
+      }
+    ]
+    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(sampleApplications))
+  }
 }
 
 // INSTANT Delete Contest Function
@@ -126,4 +183,54 @@ export const updateContestStatusLocal = (contestId: string, newStatus: Contest['
   
   const updatedContest = updatedContests.find(c => c.id === contestId)
   return { data: updatedContest, error: null }
+}
+
+// Function to create sample applications for a specific user (for testing Profile functionality)
+export const createSampleApplicationsForUser = (userId: string) => {
+  const contests = getContestsLocal()
+  if (contests.length === 0) {
+    initializeLocalData() // Ensure contests exist first
+  }
+  
+  const sampleApplications: ContestApplication[] = [
+    {
+      id: generateId(),
+      contest_id: contests[0]?.id || 'sample-contest-1',
+      user_id: userId,
+      applicant_name: 'Test User',
+      applicant_email: 'test@example.com',
+      project_name: 'E-Commerce Platform',
+      project_description: 'A modern e-commerce platform with React, Node.js, and MongoDB. Features include user authentication, product catalog, shopping cart, and payment integration.',
+      tech_stack: 'React, Node.js, MongoDB, Stripe API',
+      github_link: 'https://github.com/testuser/ecommerce-platform',
+      demo_link: 'https://ecommerce-demo.com',
+      team_members: 'Test User (Lead Developer), Jane Smith (UI/UX Designer)',
+      status: 'Pending',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 86400000).toISOString()
+    },
+    {
+      id: generateId(),
+      contest_id: contests[1]?.id || 'sample-contest-2',
+      user_id: userId,
+      applicant_name: 'Test User',
+      applicant_email: 'test@example.com',
+      project_name: 'AI Code Review Assistant',
+      project_description: 'An AI-powered tool that automatically reviews code for bugs, security vulnerabilities, and best practices using machine learning models.',
+      tech_stack: 'Python, TensorFlow, FastAPI, Docker',
+      github_link: '',
+      demo_link: '',
+      team_members: '',
+      status: 'Approved',
+      created_at: new Date(Date.now() - 172800000).toISOString(),
+      updated_at: new Date(Date.now() - 86400000).toISOString()
+    }
+  ]
+  
+  // Add to existing applications
+  const existingApplications = getApplicationsLocal()
+  const updatedApplications = [...existingApplications, ...sampleApplications]
+  localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(updatedApplications))
+  
+  return sampleApplications
 }

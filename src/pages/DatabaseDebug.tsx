@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createContest, testDatabaseConnection, getAllContests, deleteContest, getAllApplications, type Contest, type ContestApplication } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
+import Layout from '@/components/Layout';
 
 const DatabaseDebug = () => {
   const [result, setResult] = useState<string>('');
@@ -145,18 +146,19 @@ Data: ${JSON.stringify(rawApplications, null, 2)}
   };
 
   return (
-    <div className="p-6 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-6">Database Debug</h1>
-      
-      <div className="space-x-4 mb-6">
-        <Button onClick={testConnection}>Test Connection</Button>
-        <Button onClick={testCreateContest}>Test Create Contest</Button>
-        <Button onClick={testDeleteContest} variant="destructive">Test Delete Contest</Button>
-        <Button onClick={testGetApplications}>Test Get Applications</Button>
-        <Button onClick={testCreateApplication} className="bg-green-600 hover:bg-green-700">Create Test Application</Button>
-      </div>
-      
-      <div className="bg-gray-800 p-4 rounded">
+    <Layout>
+      <div className="p-6 bg-gray-900 text-white min-h-screen">
+        <h1 className="text-2xl font-bold mb-6">Database Debug</h1>
+        
+        <div className="space-x-4 mb-6">
+          <Button onClick={testConnection}>Test Connection</Button>
+          <Button onClick={testCreateContest}>Test Create Contest</Button>
+          <Button onClick={testDeleteContest} variant="destructive">Test Delete Contest</Button>
+          <Button onClick={testGetApplications}>Test Get Applications</Button>
+          <Button onClick={testCreateApplication} className="bg-green-600 hover:bg-green-700">Create Test Application</Button>
+        </div>
+        
+        <div className="bg-gray-800 p-4 rounded">
         <h3 className="font-bold mb-2">Result:</h3>
         <pre className="whitespace-pre-wrap text-sm">{result}</pre>
       </div>
@@ -172,6 +174,7 @@ Data: ${JSON.stringify(rawApplications, null, 2)}
         </p>
       </div>
     </div>
+    </Layout>
   );
 };
 

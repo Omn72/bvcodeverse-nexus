@@ -4,6 +4,7 @@ import { Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { adminSignIn } from '@/lib/supabase';
+import Layout from '@/components/Layout';
 
 const AdminLogin = () => {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
@@ -52,10 +53,11 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
-      <div className="absolute top-10 left-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-10 right-10 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl"></div>
+    <Layout>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-900"></div>
+        <div className="absolute top-10 left-10 w-32 h-32 bg-red-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-10 right-10 w-40 h-40 bg-orange-500/10 rounded-full blur-3xl"></div>
       
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -156,6 +158,7 @@ const AdminLogin = () => {
         </div>
       </motion.div>
     </div>
+    </Layout>
   );
 };
 

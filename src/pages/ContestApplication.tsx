@@ -4,7 +4,8 @@ import { FileText, Send, Trophy, Clock, Users, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { submitContestApplication, getActiveContests, type Contest } from '@/lib/supabase';
-import { submitApplicationLocal, getActiveContestsLocal } from '@/lib/localDb';
+import { submitApplicationLocal, getActiveContestsLocal, checkExistingApplication } from '@/lib/localDb';
+import Layout from '@/components/Layout';
 
 const ContestApplication: React.FC = () => {
   const { user } = useAuth();
@@ -25,6 +26,7 @@ const ContestApplication: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [existingApplication, setExistingApplication] = useState<any | null>(null);
   const [instantMode, setInstantMode] = useState(true); // INSTANT MODE for applications
 
   useEffect(() => {
@@ -35,6 +37,14 @@ const ContestApplication: React.FC = () => {
       loadActiveContests();
     }
   }, [user]);
+
+  // Check for existing application when contest selection changes
+  useEffect(() => {
+    if (user && selectedContestId) {
+      const existingApp = checkExistingApplication(user.id, selectedContestId);
+      setExistingApplication(existingApp);
+    }
+  }, [user, selectedContestId]);
 
   const loadActiveContests = async () => {
     try {
@@ -87,6 +97,13 @@ const ContestApplication: React.FC = () => {
       return;
     }
 
+    // Double-check for existing application
+    if (existingApplication) {
+      setError('You have already submitted an application for this contest');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Create application object
       const applicationData = {
@@ -107,7 +124,14 @@ const ContestApplication: React.FC = () => {
         const { data, error } = submitApplicationLocal(applicationData);
         
         if (error) {
-          throw error;
+          if (error.code === 'DUPLICATE_APPLICATION') {
+            setExistingApplication(error.existingApplication);
+            setError('You have already submitted an application for this contest');
+          } else {
+            throw error;
+          }
+          setIsSubmitting(false);
+          return;
         }
 
         console.log('✅ INSTANT: Application submitted!', data);
@@ -184,8 +208,9 @@ const ContestApplication: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white pt-20">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <Layout>
+      <div className="min-h-screen bg-black text-white pt-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -253,6 +278,21 @@ const ContestApplication: React.FC = () => {
                   </option>
                 ))}
               </select>
+              
+              {/* Existing Application Warning */}
+              {existingApplication && selectedContestId && (
+                <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-600/30 rounded-lg">
+                  <div className="flex items-center space-x-2 text-yellow-400 text-sm">
+                    <Trophy className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">You have already applied to this contest</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Application submitted on {existingApplication.created_at ? 
+                      new Date(existingApplication.created_at).toLocaleDateString() : 'Unknown date'
+                    } • Status: {existingApplication.status}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
@@ -266,7 +306,8 @@ const ContestApplication: React.FC = () => {
                 value={formData.projectName}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                disabled={!!existingApplication}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Enter your project name"
               />
             </div>
@@ -281,7 +322,8 @@ const ContestApplication: React.FC = () => {
                 value={formData.category}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                disabled={!!existingApplication}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="web-development">Web Development</option>
                 <option value="mobile-app">Mobile App</option>
@@ -303,7 +345,8 @@ const ContestApplication: React.FC = () => {
                 onChange={handleInputChange}
                 required
                 rows={4}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                disabled={!!existingApplication}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Describe your project idea and what problem it solves..."
               />
             </div>
@@ -319,7 +362,8 @@ const ContestApplication: React.FC = () => {
                 value={formData.techStack}
                 onChange={handleInputChange}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                disabled={!!existingApplication}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="e.g., React, Node.js, Python, MongoDB"
               />
             </div>
@@ -334,7 +378,8 @@ const ContestApplication: React.FC = () => {
                 name="githubLink"
                 value={formData.githubLink}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                disabled={!!existingApplication}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="https://github.com/username/project"
               />
             </div>
@@ -349,7 +394,8 @@ const ContestApplication: React.FC = () => {
                 name="demoLink"
                 value={formData.demoLink}
                 onChange={handleInputChange}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                disabled={!!existingApplication}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="https://your-demo.com"
               />
             </div>
@@ -364,29 +410,57 @@ const ContestApplication: React.FC = () => {
                 value={formData.teamMembers}
                 onChange={handleInputChange}
                 rows={3}
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                disabled={!!existingApplication}
+                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="List your team members (names and roles)..."
               />
             </div>
 
             <div className="flex items-center justify-end space-x-4 pt-6">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Submit Application
-                  </>
-                )}
-              </button>
+              {existingApplication ? (
+                <div className="flex flex-col items-end space-y-3">
+                  <div className="flex items-center space-x-2 text-yellow-400">
+                    <Trophy className="w-5 h-5" />
+                    <span className="font-medium">Already Applied</span>
+                  </div>
+                  <div className="text-sm text-gray-400 text-right">
+                    <p>You submitted an application for this contest on</p>
+                    <p className="font-medium text-cyan-400">
+                      {existingApplication.created_at ? new Date(existingApplication.created_at).toLocaleDateString() : 'Unknown date'}
+                    </p>
+                    <p className="mt-1">
+                      Status: <span className={`font-medium ${
+                        existingApplication.status === 'Approved' ? 'text-green-400' :
+                        existingApplication.status === 'Rejected' ? 'text-red-400' :
+                        'text-yellow-400'
+                      }`}>
+                        {existingApplication.status}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2">
+                    Select a different contest to submit a new application
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !!existingApplication}
+                  className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-500 text-white font-medium rounded-lg hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit Application
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </form>
         </motion.div>
@@ -402,7 +476,8 @@ const ContestApplication: React.FC = () => {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </Layout>
   );
 };
 

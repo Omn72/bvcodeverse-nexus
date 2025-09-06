@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Code2, Menu, X, LogOut, User, ChevronDown, FileText } from 'lucide-react';
+import { Menu, X, LogOut, User, ChevronDown, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
@@ -75,8 +75,11 @@ const Navigation = () => {
               className="flex items-center space-x-2"
               onClick={() => console.log('Logo clicked')}
             >
-              <Code2 className="h-9 w-9 text-cyan-500" />
-              <span className="text-xl font-bold text-white">BVCodeVerse</span>
+              <img 
+                src="/logo.png" 
+                alt="BVCodeVerse Logo" 
+                className="h-14 w-14 object-contain filter brightness-125 transform scale-150"
+              />
             </Link>
           </div>
 
@@ -151,6 +154,17 @@ const Navigation = () => {
                       Apply for Contest
                     </Link>
                     <Link 
+                      to="/profile"
+                      className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                      onClick={() => {
+                        console.log('Profile link clicked');
+                        setShowUserMenu(false);
+                      }}
+                    >
+                      <User className="w-4 h-4 mr-3" />
+                      Profile
+                    </Link>
+                    <Link 
                       to="/dashboard"
                       className="flex items-center px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
                       onClick={() => {
@@ -192,7 +206,7 @@ const Navigation = () => {
                     to="/signup" 
                     className="relative inline-flex items-center justify-center px-6 py-2 text-base font-normal text-white bg-black border border-transparent rounded-full"
                   >
-                    Join the Club
+                    Login
                   </Link>
                 </div>
               </>
@@ -238,6 +252,14 @@ const Navigation = () => {
                     <span>Apply for Contest</span>
                   </Link>
                   <Link 
+                    to="/profile"
+                    className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors py-2"
+                    onClick={() => setExpanded(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Profile</span>
+                  </Link>
+                  <Link 
                     to="/dashboard"
                     className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors py-2"
                     onClick={() => setExpanded(false)}
@@ -275,7 +297,7 @@ const Navigation = () => {
                       className="relative inline-flex items-center justify-center w-full px-6 py-2 text-base font-normal text-white bg-black border border-transparent rounded-full"
                       onClick={() => setExpanded(false)}
                     >
-                      Join the Club
+                      Login
                     </Link>
                   </div>
                 </>

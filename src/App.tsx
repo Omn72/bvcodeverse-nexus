@@ -9,12 +9,13 @@ import Events from "./pages/Events";
 import Gallery from "./pages/Gallery";
 import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
+
+import ProfilePage from "./pages/ProfileModern";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ContestApplication from "./pages/ContestApplication";
 import ContestsFast from "./pages/ContestsFast";
-import Contests from "./pages/Contests";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import DatabaseTest from "./pages/DatabaseTest";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/contest" element={<ContestsFast />} />
