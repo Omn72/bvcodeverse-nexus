@@ -156,7 +156,7 @@ export function TeamCard({
         x: index % 2 === 0 ? 5 : -5,
         transition: { duration: 0.2 }
       }}
-      {...props}
+      {...props as any} // Explicitly cast props to 'any' to resolve type mismatch
     >
       {/* Enhanced glassmorphism card background */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-md"></div>
