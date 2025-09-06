@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout';
+import Footer from '@/components/Footer';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Github, Linkedin } from 'lucide-react';
@@ -138,7 +139,6 @@ export function TeamCard({
         scale: 0.8
       }}
       animate={{ 
-        opacity: 1, 
         x: 0,
         y: 0,
         scale: 1
@@ -366,6 +366,7 @@ const Team = () => {
           </div>
         </motion.section>
       </div>
+      <Footer />
     </Layout>
   );
 };

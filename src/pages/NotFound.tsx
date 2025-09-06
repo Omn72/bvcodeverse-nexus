@@ -3,6 +3,7 @@ import { Home, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import Footer from '@/components/Footer';
 
 const NotFound = () => {
   const location = useLocation();
@@ -45,6 +46,7 @@ const NotFound = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </Layout>
   );
 };

@@ -1,6 +1,7 @@
 import Layout from '@/components/Layout';
 import { Code2, Github, ExternalLink, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Footer from '@/components/Footer';
 
 const Projects = () => {
   return (
@@ -61,6 +62,7 @@ const Projects = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </Layout>
   );
 };

@@ -186,12 +186,12 @@ const Hero = () => {
           </div>
 
           <div className="relative flex items-center justify-center w-full h-full -mt-32">
-            {/* Gradient glow around robot - increased size */}
+            {/* Gradient glow around robot - reduced size */}
             <div className="absolute z-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] rounded-full bg-gradient-to-br from-cyan-400/30 via-purple-500/20 to-transparent blur-md pointer-events-none"></div>
-            {/* Spline Robot 3D React Component - increased size further */}
+            {/* Spline Robot 3D React Component - reduced size */}
             <SplineScene 
               scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="w-full h-[120vh] z-10 scale-125 translate-y-8"
+              className="w-full h-[110vh] z-10 scale-125 translate-y-5"
             />
             {/* Bottom overlay to hide cut-off legs */}
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent z-15 pointer-events-none"></div>

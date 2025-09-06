@@ -1,6 +1,7 @@
 import Layout from '@/components/Layout';
 import { Calendar, MapPin, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Footer from '@/components/Footer';
 
 const Events = () => {
   return (
@@ -54,6 +55,7 @@ const Events = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </Layout>
   );
 };

@@ -1,7 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const AboutUs = () => {
+  const [isLoading, setIsLoading] = useState(true);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000); // Simulate loading time
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-black">
+        <img 
+          src="/logo.png" 
+          alt="Loading BV CodeVerse Club Logo" 
+          className="w-32 h-32 animate-spin"
+        />
+      </div>
+    );
+  }
 
   return (
     <section className="relative py-16 bg-black text-white">

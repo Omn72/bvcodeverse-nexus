@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout';
 import { Image, Play } from 'lucide-react';
+import Footer from '@/components/Footer';
 
 const Gallery = () => {
   return (
@@ -40,6 +41,7 @@ const Gallery = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </Layout>
   );
 };
