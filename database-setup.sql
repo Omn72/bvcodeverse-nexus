@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS contests (
   max_team_size INTEGER NOT NULL DEFAULT 1,
   deadline DATE NOT NULL,
   status VARCHAR(20) NOT NULL DEFAULT 'Draft' CHECK (status IN ('Draft', 'Open', 'Closed')),
-  created_by UUID REFERENCES auth.users(id),
+  created_by VARCHAR(255) DEFAULT 'Admin',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS contests (
 CREATE TABLE IF NOT EXISTS contest_applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   contest_id UUID NOT NULL REFERENCES contests(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id UUID DEFAULT gen_random_uuid(),
   applicant_name VARCHAR(255) NOT NULL,
   applicant_email VARCHAR(255) NOT NULL,
   project_name VARCHAR(255) NOT NULL,
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS contest_applications (
   status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Approved', 'Rejected')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(contest_id, user_id) -- Prevent multiple applications from same user to same contest
+  UNIQUE(contest_id, applicant_email) -- Prevent multiple applications from same email to same contest
 );
 
 -- Create indexes for better performance
@@ -41,23 +41,17 @@ CREATE INDEX IF NOT EXISTS idx_contest_applications_user_id ON contest_applicati
 CREATE INDEX IF NOT EXISTS idx_contest_applications_status ON contest_applications(status);
 CREATE INDEX IF NOT EXISTS idx_contest_applications_created_at ON contest_applications(created_at);
 
--- Enable Row Level Security (RLS)
-ALTER TABLE contests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE contest_applications ENABLE ROW LEVEL SECURITY;
+-- Disable RLS for development (you can enable it later with proper policies)
+ALTER TABLE contests DISABLE ROW LEVEL SECURITY;
+ALTER TABLE contest_applications DISABLE ROW LEVEL SECURITY;
 
--- RLS Policies for contests table
--- Allow everyone to read open contests
-CREATE POLICY "Allow public read access to open contests" ON contests
-  FOR SELECT USING (status = 'Open');
+-- Alternative: Enable RLS with permissive policies for development
+-- ALTER TABLE contests ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE contest_applications ENABLE ROW LEVEL SECURITY;
 
--- Allow authenticated users to read all contests
-CREATE POLICY "Allow authenticated users to read all contests" ON contests
-  FOR SELECT USING (auth.role() = 'authenticated');
-
--- Allow admin users to manage contests (you'll need to implement admin role logic)
-CREATE POLICY "Allow admin to manage contests" ON contests
-  FOR ALL USING (
-    auth.uid() IS NOT NULL AND 
+-- Allow public access to contests table for development
+-- CREATE POLICY "Allow public access to contests" ON contests FOR ALL USING (true);
+-- CREATE POLICY "Allow public access to applications" ON contest_applications FOR ALL USING (true); 
     EXISTS (
       SELECT 1 FROM auth.users 
       WHERE auth.users.id = auth.uid() 

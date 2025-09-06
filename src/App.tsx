@@ -13,10 +13,12 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ContestApplication from "./pages/ContestApplication";
+import ContestsFast from "./pages/ContestsFast";
 import Contests from "./pages/Contests";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import DatabaseTest from "./pages/DatabaseTest";
+import DatabaseDebug from "./pages/DatabaseDebug";
 import AdminRoute from "./components/AdminRoute";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -38,9 +40,11 @@ const App = () => (
             <Route path="/projects" element={<Projects />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/contest" element={<Contests />} />
+            <Route path="/contest" element={<ContestsFast />} />
+            <Route path="/contests" element={<ContestsFast />} />
             <Route path="/apply-contest" element={<ContestApplication />} />
             <Route path="/database-test" element={<DatabaseTest />} />
+            <Route path="/database-debug" element={<DatabaseDebug />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={
               <AdminRoute>

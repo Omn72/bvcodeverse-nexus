@@ -1,27 +1,39 @@
 import { ArrowRight, Trophy, Clock, Gift, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Squares } from '@/components/ui/squares-background';
 
 const CTA = () => {
   return (
-    <section className="py-20 bg-background relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-secondary/5" />
+    <section className="py-20 bg-black relative overflow-hidden">
+      {/* Animated Squares Background */}
+      <div className="absolute inset-0">
+        <Squares
+          direction="diagonal"
+          speed={0.5}
+          squareSize={50}
+          borderColor="#333333"
+          hoverFillColor="#1a1a1a"
+          className="opacity-70"
+        />
+      </div>
+      
+      {/* Background gradient effects */}
       <div className="absolute top-10 left-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000" />
       
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="space-y-8">
           <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
             <Trophy className="h-4 w-4 text-primary mr-2" />
             <span className="text-sm font-medium text-primary">Contest Season Open</span>
           </div>
           
-          <h2 className="text-4xl md:text-6xl font-bold">
+          <h2 className="text-4xl md:text-6xl font-bold text-white">
             Ready to <span className="gradient-text">Win</span> Big?
           </h2>
           
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
             Join our exciting coding contests and hackathons. Compete with fellow developers, 
             showcase your skills, and win amazing prizes. Your next big victory awaits!
           </p>
@@ -33,8 +45,8 @@ const CTA = () => {
                 <Trophy className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-foreground">Win Prizes</div>
-                <div className="text-sm text-muted-foreground">Cash & rewards</div>
+                <div className="font-semibold text-white">Win Prizes</div>
+                <div className="text-sm text-gray-400">Cash & rewards</div>
               </div>
             </div>
             
@@ -43,8 +55,8 @@ const CTA = () => {
                 <Clock className="h-5 w-5 text-secondary" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-foreground">48H Challenges</div>
-                <div className="text-sm text-muted-foreground">Fast-paced coding</div>
+                <div className="font-semibold text-white">48H Challenges</div>
+                <div className="text-sm text-gray-400">Fast-paced coding</div>
               </div>
             </div>
             
@@ -53,8 +65,8 @@ const CTA = () => {
                 <Gift className="h-5 w-5 text-primary" />
               </div>
               <div className="text-left">
-                <div className="font-semibold text-foreground">Recognition</div>
-                <div className="text-sm text-muted-foreground">Build your portfolio</div>
+                <div className="font-semibold text-white">Recognition</div>
+                <div className="text-sm text-gray-400">Build your portfolio</div>
               </div>
             </div>
           </div>
@@ -62,14 +74,17 @@ const CTA = () => {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/apply-contest">
-              <Button className="btn-neon group px-8 py-6 text-lg font-semibold rounded-xl">
+              <Button className="btn-neon group px-8 py-6 text-lg font-semibold rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                 Apply for Contest
                 <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             
             <Link to="/contest">
-              <Button variant="outline" className="btn-outline-neon px-8 py-6 text-lg font-semibold rounded-xl">
+              <Button 
+                variant="outline" 
+                className="btn-outline-neon px-8 py-6 text-lg font-semibold rounded-xl border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black transition-all duration-300"
+              >
                 View Contest Details
               </Button>
             </Link>
@@ -77,19 +92,19 @@ const CTA = () => {
 
           {/* Contest Statistics */}
           <div className="mt-12 text-center">
-            <p className="text-sm text-muted-foreground mb-4">Current Contest Stats</p>
-            <div className="flex justify-center items-center space-x-8 text-muted-foreground">
-              <div className="text-2xl font-bold gradient-text">$5,000</div>
-              <div className="w-px h-8 bg-border"></div>
-              <div className="text-2xl font-bold gradient-text">48H</div>
-              <div className="w-px h-8 bg-border"></div>
-              <div className="text-2xl font-bold gradient-text">150+</div>
+            <p className="text-sm text-gray-400 mb-4">Current Contest Stats</p>
+            <div className="flex justify-center items-center space-x-8 text-gray-400">
+              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">$5,000</div>
+              <div className="w-px h-8 bg-gray-600"></div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">48H</div>
+              <div className="w-px h-8 bg-gray-600"></div>
+              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">150+</div>
             </div>
-            <div className="flex justify-center items-center space-x-8 text-xs text-muted-foreground mt-2">
+            <div className="flex justify-center items-center space-x-8 text-xs text-gray-500 mt-2">
               <span>Prize Pool</span>
-              <span></span>
+              <span className="w-4"></span>
               <span>Duration</span>
-              <span></span>
+              <span className="w-4"></span>
               <span>Participants</span>
             </div>
           </div>

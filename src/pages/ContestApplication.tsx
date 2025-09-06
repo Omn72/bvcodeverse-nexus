@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Send, Trophy, Clock, Users, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { submitContestApplication, getActiveContests, type Contest } from '@/lib/supabase';
+import { submitApplicationLocal, getActiveContestsLocal } from '@/lib/localDb';
 
 const ContestApplication: React.FC = () => {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const contestId = searchParams.get('contestId');
+  
   const [contests, setContests] = useState<Contest[]>([]);
   const [selectedContestId, setSelectedContestId] = useState<string>('');
   const [formData, setFormData] = useState({
@@ -20,6 +25,7 @@ const ContestApplication: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [instantMode, setInstantMode] = useState(true); // INSTANT MODE for applications
 
   useEffect(() => {
     if (!user) {
@@ -32,6 +38,20 @@ const ContestApplication: React.FC = () => {
 
   const loadActiveContests = async () => {
     try {
+      if (instantMode) {
+        // INSTANT MODE: Load from local storage
+        const localContests = getActiveContestsLocal();
+        setContests(localContests);
+        if (contestId) {
+          // Pre-select contest from URL parameter
+          setSelectedContestId(contestId);
+        } else if (localContests.length > 0) {
+          setSelectedContestId(localContests[0].id);
+        }
+        return;
+      }
+      
+      // Original database mode
       const { data, error } = await getActiveContests();
       if (error) {
         console.error('Error loading contests:', error);
@@ -82,15 +102,27 @@ const ContestApplication: React.FC = () => {
         team_members: formData.teamMembers || undefined,
       };
 
-      // Submit to database
-      const { data, error } = await submitContestApplication(applicationData);
+      if (instantMode) {
+        // INSTANT MODE: Save to local storage - NO DELAYS!
+        const { data, error } = submitApplicationLocal(applicationData);
+        
+        if (error) {
+          throw error;
+        }
 
-      if (error) {
-        throw error;
+        console.log('✅ INSTANT: Application submitted!', data);
+        setSubmitted(true);
+      } else {
+        // Original database mode
+        const { data, error } = await submitContestApplication(applicationData);
+
+        if (error) {
+          throw error;
+        }
+
+        console.log('Contest application submitted successfully:', data);
+        setSubmitted(true);
       }
-
-      console.log('Contest application submitted successfully:', data);
-      setSubmitted(true);
       
       // Reset form
       setFormData({
@@ -107,6 +139,8 @@ const ContestApplication: React.FC = () => {
       console.error('Error submitting application:', error);
       if (error.message?.includes('unique')) {
         setError('You have already applied to this contest!');
+      } else if (error.message?.includes('timed out')) {
+        setError('Submission timed out. Please check your internet connection and try again.');
       } else {
         setError(error.message || 'Failed to submit application. Please try again.');
       }

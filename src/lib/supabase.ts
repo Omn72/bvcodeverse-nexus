@@ -457,7 +457,30 @@ export const initializeUserAccount = async (userId: string, email: string) => {
 }
 
 // Contest Management Functions
-export const createContest = async (contestData: Omit<Contest, 'id' | 'created_at' | 'updated_at'>) => {
+// Database connection warmup function
+export const warmupDatabase = async () => {
+  try {
+    console.log('Warming up database connection...')
+    const { data, error } = await supabase
+      .from('contests')
+      .select('id')
+      .limit(1)
+    
+    if (error && !error.message?.includes('relation "contests" does not exist')) {
+      console.error('Database warmup failed:', error)
+      return { success: false, error }
+    }
+    
+    console.log('Database connection warmed up successfully')
+    return { success: true, error: null }
+  } catch (err: any) {
+    console.error('Database warmup error:', err)
+    return { success: false, error: err }
+  }
+}
+
+export const createContest = async (contestData: Omit<Contest, 'id' | 'created_at' | 'updated_at'>): Promise<any> => {
+  // FAST MODE: Direct database insert without retries or extra logging
   const { data, error } = await supabase
     .from('contests')
     .insert({
@@ -472,12 +495,26 @@ export const createContest = async (contestData: Omit<Contest, 'id' | 'created_a
 }
 
 export const getAllContests = async () => {
-  const { data, error } = await supabase
-    .from('contests')
-    .select('*')
-    .order('created_at', { ascending: false })
-  
-  return { data, error }
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+    
+    const { data, error } = await supabase
+      .from('contests')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .abortSignal(controller.signal)
+    
+    clearTimeout(timeoutId);
+    return { data, error }
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('Database query timed out after 3 seconds');
+      return { data: null, error: { message: 'Database connection timeout' } };
+    }
+    console.error('Error in getAllContests:', error);
+    return { data: null, error };
+  }
 }
 
 export const getActiveContests = async () => {
@@ -505,16 +542,30 @@ export const updateContest = async (contestId: string, updates: Partial<Contest>
 }
 
 export const deleteContest = async (contestId: string) => {
-  const { data, error } = await supabase
-    .from('contests')
-    .delete()
-    .eq('id', contestId)
-  
-  return { data, error }
+  try {
+    console.log('Deleting contest with ID:', contestId)
+    
+    const { data, error } = await supabase
+      .from('contests')
+      .delete()
+      .eq('id', contestId)
+    
+    if (error) {
+      console.error('Supabase error deleting contest:', error)
+    } else {
+      console.log('Contest deleted successfully:', data)
+    }
+    
+    return { data, error }
+  } catch (err: any) {
+    console.error('Unexpected error in deleteContest:', err)
+    return { data: null, error: { message: err.message || 'Unexpected error' } }
+  }
 }
 
-// Contest Application Functions
-export const submitContestApplication = async (applicationData: Omit<ContestApplication, 'id' | 'created_at' | 'updated_at' | 'status'>) => {
+// Contest Application Functions  
+export const submitContestApplication = async (applicationData: Omit<ContestApplication, 'id' | 'created_at' | 'updated_at' | 'status'>): Promise<any> => {
+  // FAST MODE: Direct database insert
   const { data, error } = await supabase
     .from('contest_applications')
     .insert({
@@ -598,28 +649,93 @@ export const adminSignIn = async (username: string, password: string) => {
 
 // Contest Statistics
 export const getContestStats = async () => {
-  const { data: contests, error: contestError } = await supabase
-    .from('contests')
-    .select('id, status, prize_pool')
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout for stats
+    
+    // Use Promise.all to run queries in parallel with reduced data
+    const [contestsResult, applicationsResult] = await Promise.all([
+      supabase
+        .from('contests')
+        .select('status, prize_pool')
+        .abortSignal(controller.signal),
+      supabase
+        .from('contest_applications')
+        .select('status')
+        .abortSignal(controller.signal)
+    ]);
 
-  if (contestError) return { data: null, error: contestError }
+    clearTimeout(timeoutId);
 
-  const { data: applications, error: appError } = await supabase
-    .from('contest_applications')
-    .select('id, status')
+    const { data: contests, error: contestError } = contestsResult;
+    const { data: applications, error: appError } = applicationsResult;
 
-  if (appError) return { data: null, error: appError }
+    if (contestError) return { data: null, error: contestError };
+    if (appError) return { data: null, error: appError };
 
-  const stats = {
-    totalContests: contests?.length || 0,
-    activeContests: contests?.filter(c => c.status === 'Open').length || 0,
-    totalApplications: applications?.length || 0,
-    pendingApplications: applications?.filter(a => a.status === 'Pending').length || 0,
-    totalPrizePool: contests?.reduce((sum, contest) => {
-      const prize = parseInt(contest.prize_pool.replace(/[$,]/g, '') || '0')
-      return sum + prize
-    }, 0) || 0
+    // Calculate stats more efficiently with early returns
+    const stats = {
+      totalContests: contests?.length || 0,
+      activeContests: contests?.filter(c => c.status === 'Open').length || 0,
+      totalApplications: applications?.length || 0,
+      pendingApplications: applications?.filter(a => a.status === 'Pending').length || 0,
+      totalPrizePool: contests?.reduce((sum, contest) => {
+        const prizeStr = contest.prize_pool?.toString() || '0';
+        const prizeNum = parseInt(prizeStr.replace(/[^0-9]/g, '') || '0');
+        return sum + prizeNum;
+      }, 0) || 0
+    };
+
+    return { data: stats, error: null };
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      console.error('Stats query timed out after 2 seconds');
+      return { data: null, error: { message: 'Stats loading timeout' } };
+    }
+    console.error('Error in getContestStats:', error);
+    return { data: null, error };
   }
+}
 
-  return { data: stats, error: null }
+// Database connection test
+export const testDatabaseConnection = async () => {
+  try {
+    console.log('Testing database connection...')
+    
+    // Test basic Supabase connection with a simple query
+    const { data: healthCheck, error: healthError } = await supabase
+      .rpc('version') // Try a simple function call first
+    
+    if (healthError) {
+      console.log('RPC test failed, trying table query...')
+      
+      // Try a simple select on contests table
+      const { data: tableCheck, error: tableError } = await supabase
+        .from('contests')
+        .select('id')
+        .limit(1)
+      
+      if (tableError) {
+        console.error('Table query failed:', tableError)
+        return { 
+          success: false, 
+          error: `Database error: ${tableError.message}`,
+          suggestion: tableError.message.includes('relation "contests" does not exist') 
+            ? 'Run the simple-db-setup.sql script in your Supabase dashboard'
+            : 'Check your Supabase configuration and network connection'
+        }
+      }
+    }
+    
+    console.log('Database connection successful!')
+    return { success: true, error: null, suggestion: 'Database is working correctly!' }
+    
+  } catch (error: any) {
+    console.error('Unexpected database error:', error)
+    return { 
+      success: false, 
+      error: error.message || 'Unknown connection error',
+      suggestion: 'Check your internet connection and Supabase URL/Key in .env file'
+    }
+  }
 }

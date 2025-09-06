@@ -13,6 +13,8 @@ import {
   Trash2,
   User,
   FileText,
+  Database,
+  BarChart3,
   Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,10 +24,21 @@ import {
   getAllContests, 
   getAllApplications, 
   getContestStats,
+  updateContest,
+  deleteContest,
   adminSignIn,
+  testDatabaseConnection,
   type Contest,
   type ContestApplication 
 } from '@/lib/supabase';
+import { 
+  createContestLocal, 
+  getContestsLocal, 
+  getApplicationsLocal,
+  initializeLocalData,
+  deleteContestLocal,
+  updateContestStatusLocal
+} from '@/lib/localDb';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'contests' | 'applications'>('overview');
@@ -36,55 +49,86 @@ const AdminDashboard = () => {
   const [showAddContest, setShowAddContest] = useState(false);
   const [showApplications, setShowApplications] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [instantMode, setInstantMode] = useState(true); // INSTANT MODE - No database delays!
   const navigate = useNavigate();
 
   // Load data from database
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        console.log('Loading dashboard data...');
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      if (instantMode) {
+        // INSTANT MODE: Load from local storage - BLAZING FAST!
+        console.log('🚀 INSTANT MODE: Loading from local storage...');
+        initializeLocalData(); // Initialize with sample data if needed
         
-        // Load contests
-        const { data: contestsData, error: contestsError } = await getAllContests();
-        if (contestsError) {
-          console.error('Error loading contests:', contestsError);
-          // Check if it's a table doesn't exist error
-          if (contestsError.message?.includes('relation "contests" does not exist') || 
-              contestsError.message?.includes('table') || 
-              contestsError.message?.includes('relation')) {
-            alert('Database tables not found. Please run the database-setup.sql file in your Supabase SQL editor first.');
-          }
-        } else {
-          console.log('Contests loaded:', contestsData?.length || 0);
-          setContests(contestsData || []);
-        }
+        const localContests = getContestsLocal();
+        const localApplications = getApplicationsLocal();
         
-        // Load applications
-        const { data: applicationsData, error: applicationsError } = await getAllApplications();
-        if (applicationsError) {
-          console.error('Error loading applications:', applicationsError);
-        } else {
-          console.log('Applications loaded:', applicationsData?.length || 0);
-          setApplications(applicationsData || []);
-        }
+        setContests(localContests);
+        setApplications(localApplications);
+        setStats({
+          totalContests: localContests.length,
+          activeContests: localContests.filter(c => c.status === 'Open').length,
+          totalApplications: localApplications.length,
+          pendingApplications: localApplications.filter(a => a.status === 'Pending').length,
+        });
         
-        // Load stats
-        const { data: statsData, error: statsError } = await getContestStats();
-        if (statsError) {
-          console.error('Error loading stats:', statsError);
-        } else {
-          console.log('Stats loaded:', statsData);
-          setStats(statsData);
-        }
-        
-      } catch (error) {
-        console.error('Unexpected error loading data:', error);
-      } finally {
+        console.log('✅ INSTANT LOAD COMPLETE:', { 
+          contests: localContests.length, 
+          applications: localApplications.length 
+        });
         setLoading(false);
+        return;
       }
-    };
+      
+      // Original slow database mode
+      console.log('Loading dashboard data...');
+      
+      // Load contests
+      const { data: contestsData, error: contestsError } = await getAllContests();
+      if (contestsError) {
+        console.error('Error loading contests:', contestsError);
+        // Check if it's a table doesn't exist error
+        if (contestsError.message?.includes('relation "contests" does not exist') || 
+            contestsError.message?.includes('table') || 
+            contestsError.message?.includes('relation')) {
+          alert('Database tables not found. Please run the database-setup.sql file in your Supabase SQL editor first.');
+        }
+      } else {
+        console.log('Contests loaded:', contestsData?.length || 0);
+        setContests(contestsData || []);
+      }
+      
+      // Load applications
+      console.log('=== LOADING APPLICATIONS ===');
+      const { data: applicationsData, error: applicationsError } = await getAllApplications();
+      console.log('Applications response:', { data: applicationsData, error: applicationsError });
+      if (applicationsError) {
+        console.error('Error loading applications:', applicationsError);
+        console.log('Applications error details:', JSON.stringify(applicationsError, null, 2));
+      } else {
+        console.log('Applications loaded successfully:', applicationsData?.length || 0);
+        console.log('Full applications data:', applicationsData);
+        setApplications(applicationsData || []);
+      }
+      
+      // Load stats
+      const { data: statsData, error: statsError } = await getContestStats();
+      if (statsError) {
+        console.error('Error loading stats:', statsError);
+      } else {
+        setStats(statsData);
+      }
+      
+    } catch (error) {
+      console.error('Unexpected error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -126,6 +170,127 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteContest = async (contestId: string, contestTitle: string) => {
+    console.log('Delete requested for contest:', { contestId, contestTitle });
+    
+    const shouldDelete = confirm(`Are you sure you want to delete "${contestTitle}"?\n\nThis will also delete all applications for this contest. This action cannot be undone.`);
+    console.log('User confirmation result:', shouldDelete);
+    
+    if (!shouldDelete) {
+      console.log('Delete cancelled by user');
+      return;
+    }
+
+    console.log('User confirmed delete, proceeding...');
+
+    try {
+      if (instantMode) {
+        // INSTANT MODE: Delete from local storage - NO DELAYS!
+        console.log('🚀 INSTANT MODE: Deleting contest locally...');
+        const { data, error } = deleteContestLocal(contestId);
+        
+        if (error) {
+          alert(`❌ Error: ${error.message}`);
+          return;
+        }
+
+        console.log('✅ INSTANT: Contest deleted!', data);
+        alert('✅ Contest deleted instantly!');
+        
+        // Update local state immediately
+        setContests(prev => prev.filter(c => c.id !== contestId));
+        setApplications(prev => prev.filter(a => a.contest_id !== contestId));
+        
+        return;
+      }
+      
+      // Original database mode
+      console.log('Calling deleteContest function...');
+      const { data, error } = await deleteContest(contestId);
+      
+      console.log('Delete result:', { data, error });
+      
+      if (error) {
+        console.error('Error deleting contest:', error);
+        alert(`❌ Error deleting contest: ${error.message}\n\nCheck the browser console for more details.`);
+        return;
+      }
+
+      console.log('Contest deleted successfully, reloading data...');
+      alert('✅ Contest deleted successfully!');
+      
+      // Reload contests
+      console.log('Reloading contests...');
+      const { data: contestsData, error: contestsError } = await getAllContests();
+      if (contestsError) {
+        console.error('Error reloading contests:', contestsError);
+        alert(`Warning: Contest deleted but failed to reload list: ${contestsError.message}`);
+      } else {
+        console.log('Contests reloaded:', contestsData?.length);
+        setContests(contestsData || []);
+      }
+      
+      // Reload applications
+      console.log('Reloading applications...');
+      const { data: applicationsData, error: applicationsError } = await getAllApplications();
+      if (applicationsError) {
+        console.error('Error reloading applications:', applicationsError);
+      } else {
+        console.log('Applications reloaded:', applicationsData?.length);
+        setApplications(applicationsData || []);
+      }
+
+    } catch (err: any) {
+      console.error('Unexpected error deleting contest:', err);
+      alert(`❌ Unexpected error: ${err.message}\n\nCheck the browser console for more details.`);
+    }
+  };
+
+  const handleUpdateContestStatus = async (contestId: string, newStatus: 'Draft' | 'Open' | 'Closed', contestTitle: string) => {
+    if (!confirm(`Change status of "${contestTitle}" to "${newStatus}"?`)) {
+      return;
+    }
+
+    try {
+      if (instantMode) {
+        // Instant mode - update local storage immediately
+        const success = updateContestStatusLocal(contestId, newStatus);
+        
+        if (success) {
+          // Update local state immediately
+          setContests(prev => prev.map(contest => 
+            contest.id === contestId ? { ...contest, status: newStatus } : contest
+          ));
+          
+          alert(`⚡ Contest status instantly changed to "${newStatus}"! (Using Local Storage)`);
+        } else {
+          alert('❌ Contest not found in local storage');
+        }
+      } else {
+        // Database mode
+        const { error } = await updateContest(contestId, { status: newStatus });
+        
+        if (error) {
+          console.error('Error updating contest status:', error);
+          alert(`Error updating contest: ${error.message}`);
+          return;
+        }
+
+        alert(`✅ Contest status changed to "${newStatus}"!`);
+        
+        // Reload contests
+        const { data: contestsData } = await getAllContests();
+        if (contestsData) {
+          setContests(contestsData);
+        }
+      }
+
+    } catch (err: any) {
+      console.error('Unexpected error updating contest:', err);
+      alert(`Unexpected error: ${err.message}`);
+    }
+  };
+
   const totalApplications = applications.length;
   const activeContests = contests.filter(contest => contest.status === 'Open').length;
 
@@ -150,26 +315,43 @@ const AdminDashboard = () => {
       status: 'Draft'
     });
 
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       
+      if (isSubmitting) {
+        console.log('Form already submitting, ignoring click');
+        return;
+      }
+      
+      setIsSubmitting(true);
+      
+      console.log('=== FORM SUBMISSION DEBUG ===');
       console.log('Form submitted with data:', formData);
+      console.log('Form element:', e.target);
+      console.log('Event type:', e.type);
+      console.log('Current timestamp:', new Date().toISOString());
       
       // Validate required fields
       if (!formData.title) {
         alert('Please enter a contest title');
+        setIsSubmitting(false);
         return;
       }
       if (!formData.description) {
         alert('Please enter a contest description');
+        setIsSubmitting(false);
         return;
       }
       if (!formData.prizePool) {
         alert('Please enter a prize pool amount');
+        setIsSubmitting(false);
         return;
       }
       if (!formData.deadline) {
         alert('Please select a deadline');
+        setIsSubmitting(false);
         return;
       }
       
@@ -185,15 +367,48 @@ const AdminDashboard = () => {
         created_by: 'AdminOm' // Set a default admin user
       };
       
-      console.log('Submitting contest to database:', newContest);
+      console.log('Submitting contest:', newContest);
       
+      if (instantMode) {
+        // INSTANT MODE: Save to local storage - NO DELAYS!
+        console.log('🚀 INSTANT MODE: Creating contest locally...');
+        const { data, error } = createContestLocal(newContest);
+        
+        setIsSubmitting(false);
+        if (error) {
+          alert(`❌ Error: ${error.message}`);
+        } else {
+          console.log('✅ INSTANT: Contest created!', data);
+          alert('✅ Contest created instantly!');
+          
+          // Update local state immediately
+          setContests(prev => [data, ...prev]);
+          
+          setShowAddContest(false);
+          // Reset form
+          setFormData({
+            title: '',
+            description: '',
+            category: 'Web Development',
+            prizePool: '',
+            duration: '48 hours',
+            maxTeamSize: 4,
+            deadline: '',
+            status: 'Draft'
+          });
+        }
+        return;
+      }
+      
+      // Original slow database mode
       createContest(newContest).then(({ data, error }) => {
+        setIsSubmitting(false);
         if (error) {
           console.error('Database error creating contest:', error);
           if (error.message?.includes('relation "contests" does not exist')) {
             alert('⚠️ Database tables not found!\n\nPlease:\n1. Go to your Supabase dashboard\n2. Open SQL Editor\n3. Run the database-setup.sql file\n4. Try again');
           } else {
-            alert(`Error creating contest: ${error.message}`);
+            alert(`❌ Error creating contest:\n\n${error.message}\n\nPlease check the console for more details and try again.`);
           }
         } else {
           console.log('Contest created successfully:', data);
@@ -218,8 +433,9 @@ const AdminDashboard = () => {
           });
         }
       }).catch((err) => {
+        setIsSubmitting(false);
         console.error('Unexpected error:', err);
-        alert(`Unexpected error: ${err.message}`);
+        alert(`❌ Unexpected error:\n\n${err.message}\n\nPlease check the console for more details and try again.`);
       });
     };
 
@@ -351,9 +567,10 @@ const AdminDashboard = () => {
               </Button>
               <Button
                 type="submit"
-                className="px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Add Contest
+                {isSubmitting ? 'Creating...' : 'Add Contest'}
               </Button>
             </div>
           </form>
@@ -467,6 +684,31 @@ const AdminDashboard = () => {
               <h1 className="text-xl font-bold">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
+              {/* INSTANT MODE TOGGLE */}
+              <div className="flex items-center space-x-2">
+                <span className={`text-sm ${instantMode ? 'text-green-400' : 'text-gray-400'}`}>
+                  {instantMode ? '🚀 INSTANT MODE' : '🐌 Database Mode'}
+                </span>
+                <button
+                  onClick={() => {
+                    setInstantMode(!instantMode);
+                    if (!instantMode) {
+                      alert('🚀 INSTANT MODE ACTIVATED!\n\nNo more waiting - everything is now lightning fast!');
+                      loadData(); // Reload with instant mode
+                    } else {
+                      alert('🐌 Switched to Database Mode\n\nThis will be slower but uses real database.');
+                    }
+                  }}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                    instantMode 
+                      ? 'bg-green-500 text-white hover:bg-green-600' 
+                      : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                  }`}
+                >
+                  {instantMode ? 'FAST' : 'SLOW'}
+                </button>
+              </div>
+              
               <span className="text-gray-400">Welcome, {localStorage.getItem('adminUser')}</span>
               <Button
                 onClick={handleLogout}
@@ -651,18 +893,63 @@ const AdminDashboard = () => {
                         </p>
                         <p className="text-xs text-gray-400">Applications</p>
                       </div>
-                      <Button
-                        onClick={() => {
-                          setSelectedContest(contest);
-                          setShowApplications(true);
-                        }}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center space-x-1"
-                      >
-                        <Eye className="w-4 h-4" />
-                        <span>View</span>
-                      </Button>
+                      
+                      {/* Status Change Buttons */}
+                      <div className="flex flex-col space-y-1">
+                        {contest.status !== 'Open' && (
+                          <Button
+                            onClick={() => handleUpdateContestStatus(contest.id, 'Open', contest.title)}
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white text-xs px-2 py-1"
+                          >
+                            Open
+                          </Button>
+                        )}
+                        {contest.status !== 'Closed' && contest.status === 'Open' && (
+                          <Button
+                            onClick={() => handleUpdateContestStatus(contest.id, 'Closed', contest.title)}
+                            size="sm"
+                            className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1"
+                          >
+                            Close
+                          </Button>
+                        )}
+                        {contest.status !== 'Draft' && contest.status === 'Closed' && (
+                          <Button
+                            onClick={() => handleUpdateContestStatus(contest.id, 'Draft', contest.title)}
+                            size="sm"
+                            className="bg-gray-600 hover:bg-gray-700 text-white text-xs px-2 py-1"
+                          >
+                            Draft
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-col space-y-1">
+                        <Button
+                          onClick={() => {
+                            setSelectedContest(contest);
+                            setShowApplications(true);
+                          }}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center space-x-1"
+                        >
+                          <Eye className="w-4 h-4" />
+                          <span>View</span>
+                        </Button>
+                        
+                        <Button
+                          onClick={() => handleDeleteContest(contest.id, contest.title)}
+                          variant="destructive"
+                          size="sm"
+                          className="flex items-center space-x-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -677,9 +964,23 @@ const AdminDashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6"
           >
-            <h2 className="text-2xl font-bold text-white">All Applications</h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">All Applications</h2>
+              <Button 
+                onClick={loadData} 
+                variant="outline"
+                className="bg-gray-800 border-gray-600 hover:bg-gray-700"
+              >
+                Refresh Applications
+              </Button>
+            </div>
             <div className="space-y-4">
-              {applications.map(app => (
+              {applications.length === 0 ? (
+                <div className="bg-gray-900 border border-gray-800 rounded-lg p-6 text-center">
+                  <p className="text-gray-400">No applications found. Applications will appear here once users submit them.</p>
+                </div>
+              ) : (
+                applications.map(app => (
                 <div key={app.id} className="bg-gray-900 border border-gray-800 rounded-lg p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div>
@@ -727,7 +1028,7 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
-              ))}
+              )))}
             </div>
           </motion.div>
         )}
