@@ -113,15 +113,13 @@ export function TeamCard({
       className={cn('p-6 rounded-xl overflow-hidden text-center relative', className)} 
       initial={{ 
         opacity: 0, 
-        x: index % 2 === 0 ? -100 : 100,
-        y: 50,
-        scale: 0.8
+        scale: 0.5,
+        rotateY: -180
       }}
       animate={{ 
         opacity: 1,
-        x: 0,
-        y: 0,
-        scale: 1
+        scale: 1,
+        rotateY: 0
       }}
       transition={{ 
         duration: 0.8, 
@@ -131,10 +129,16 @@ export function TeamCard({
         damping: 15
       }}
       whileHover={{ 
-        scale: 1.05,
-        y: -10,
-        transition: { duration: 0.2 }
+        scale: 1.08,
+        y: -15,
+        rotateX: 5,
+        transition: { 
+          duration: 0.3,
+          type: "spring",
+          stiffness: 300
+        }
       }}
+      whileTap={{ scale: 0.95 }}
       {...props}
     >
       {/* Background Effects */}
@@ -193,24 +197,56 @@ export function TeamCard({
         <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-cyan-400/20 to-purple-500/20 blur-md -z-10"></div>
       </div>
 
-      {/* Member Info */}
-      <div className="relative z-10 space-y-2">
-        <h3 className="text-lg font-semibold text-white">{member.name}</h3>
-        <p className="text-cyan-400 font-medium text-sm leading-tight">{member.role}</p>
-      </div>
+      {/* Member Info with Enhanced Animations */}
+      <motion.div 
+        className="relative z-10 space-y-2"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 + (index * 0.1), duration: 0.5 }}
+      >
+        <motion.h3 
+          className="text-lg font-semibold text-white"
+          whileHover={{ scale: 1.05 }}
+        >
+          {member.name}
+        </motion.h3>
+        <motion.p 
+          className="text-cyan-400 font-medium text-sm leading-tight"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 + (index * 0.1), duration: 0.5 }}
+        >
+          {member.role}
+        </motion.p>
+      </motion.div>
 
-      {/* Social Media Icons */}
-      <div className="relative z-10 flex justify-center space-x-3 mt-4">
+      {/* Social Media Icons with Enhanced Animations */}
+      <motion.div 
+        className="relative z-10 flex justify-center space-x-3 mt-4"
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.8 + (index * 0.1), duration: 0.4, type: "spring" }}
+      >
         {member.linkedin && (
           <motion.a
             href={member.linkedin}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all duration-300"
-            whileHover={{ scale: 1.2, rotate: 5 }}
+            className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-blue-400 hover:bg-blue-400/10 transition-all duration-300 relative overflow-hidden"
+            whileHover={{ 
+              scale: 1.3, 
+              rotate: 10,
+              boxShadow: "0 0 20px rgba(59, 130, 246, 0.3)"
+            }}
             whileTap={{ scale: 0.9 }}
           >
-            <Linkedin className="w-4 h-4" />
+            <motion.div
+              className="absolute inset-0 bg-blue-400/20 rounded-full"
+              initial={{ scale: 0, opacity: 0 }}
+              whileHover={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            />
+            <Linkedin className="w-4 h-4 relative z-10" />
           </motion.a>
         )}
         {member.github && (
@@ -218,14 +254,24 @@ export function TeamCard({
             href={member.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all duration-300"
-            whileHover={{ scale: 1.2, rotate: -5 }}
+            className="p-2 rounded-full bg-gray-800/50 text-gray-400 hover:text-white hover:bg-gray-700/50 transition-all duration-300 relative overflow-hidden"
+            whileHover={{ 
+              scale: 1.3, 
+              rotate: -10,
+              boxShadow: "0 0 20px rgba(255, 255, 255, 0.2)"
+            }}
             whileTap={{ scale: 0.9 }}
           >
-            <Github className="w-4 h-4" />
+            <motion.div
+              className="absolute inset-0 bg-white/10 rounded-full"
+              initial={{ scale: 0, opacity: 0 }}
+              whileHover={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            />
+            <Github className="w-4 h-4 relative z-10" />
           </motion.a>
         )}
-      </div>
+      </motion.div>
 
       {/* Hover border effect */}
       <motion.div
@@ -240,23 +286,71 @@ export function TeamCard({
 }
 
 const Team = () => {
+  // Floating particles animation
+  const FloatingParticles = () => {
+    return (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full opacity-40"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [-20, -80, -20],
+              x: [-10, 10, -10],
+              opacity: [0.4, 0.8, 0.4],
+              scale: [0.5, 1.5, 0.5],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: Math.random() * 2,
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <Layout>
-      <div className="min-h-screen bg-black">
+      <div className="min-h-screen bg-black relative">
+        <FloatingParticles />
+        
         {/* Hero Section */}
-        <section className="py-20 px-4">
+        <section className="py-20 px-4 relative">
           <div className="max-w-7xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: -50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
             >
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
+              <motion.h1 
+                className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6"
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.6, type: "spring" }}
+              >
                 Meet Our{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-cyan-400">
+                <motion.span 
+                  className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-500 to-cyan-400"
+                  animate={{ 
+                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
+                  }}
+                  transition={{ 
+                    duration: 4, 
+                    repeat: Infinity, 
+                    ease: "linear" 
+                  }}
+                  style={{ backgroundSize: "200% 200%" }}
+                >
                   Team
-                </span>
-              </h1>
+                </motion.span>
+              </motion.h1>
             </motion.div>
             <motion.p 
               className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto"
@@ -267,9 +361,35 @@ const Team = () => {
               Passionate developers, designers, and innovators driving BVCodeVerse forward
             </motion.p>
           </div>
+
+          {/* Animated background elements */}
+          <motion.div
+            className="absolute top-20 left-10 w-16 h-16 border border-cyan-400/20 rounded-full"
+            animate={{ 
+              rotate: 360,
+              scale: [1, 1.2, 1],
+            }}
+            transition={{ 
+              duration: 8, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-12 h-12 border border-purple-500/20 rounded-full"
+            animate={{ 
+              rotate: -360,
+              scale: [1, 0.8, 1],
+            }}
+            transition={{ 
+              duration: 6, 
+              repeat: Infinity, 
+              ease: "linear" 
+            }}
+          />
         </section>
 
-        {/* Team Grid */}
+        {/* Team Grid with Enhanced Animations */}
         <motion.section 
           className="py-20 px-4"
           initial={{ opacity: 0 }}
@@ -277,16 +397,32 @@ const Team = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
         >
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <motion.div 
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
               {TEAM_MEMBERS.map((member, index) => (
-                <TeamCard
-                  className="bg-black/20 backdrop-blur-lg border border-white/10 relative shadow-xl hover:shadow-2xl hover:shadow-cyan-400/10 transition-all duration-300"
+                <motion.div
                   key={`${member.name}-${index}`}
-                  member={member}
-                  index={index}
-                />
+                  initial={{ opacity: 0, y: 100 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: 0.8 + (index * 0.1),
+                    type: "spring",
+                    stiffness: 100
+                  }}
+                >
+                  <TeamCard
+                    className="bg-black/20 backdrop-blur-lg border border-white/10 relative shadow-xl hover:shadow-2xl hover:shadow-cyan-400/10 transition-all duration-300"
+                    member={member}
+                    index={index}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </motion.section>
 
