@@ -2,6 +2,9 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { Trophy, Award, Star, Crown, Medal, TrendingUp, Users, Code2, Target } from 'lucide-react'
+import ContestForm from '@/components/ContestForm'
+import ContestList from '@/components/ContestList'
+import { useAuth } from '@/contexts/AuthContext'
 
 const Dashboard = () => {
   // Mock leaderboard data - in a real app, this would come from your database
@@ -104,6 +107,8 @@ const Dashboard = () => {
       default: return "from-cyan-400/10 to-purple-500/10 border-cyan-400/20"
     }
   }
+
+  const { user } = useAuth();
 
   return (
     <Layout>
@@ -331,6 +336,19 @@ const Dashboard = () => {
               </table>
             </div>
           </motion.div>
+
+          {/* Contest Admin + List */}
+          <div className="mt-12 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <ContestForm />
+            </div>
+            <div className="lg:col-span-2">
+              <div className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
+                <h3 className="text-xl font-semibold text-white mb-4">Contests</h3>
+                <ContestList />
+              </div>
+            </div>
+          </div>
 
           {/* Call to Action */}
           <motion.div

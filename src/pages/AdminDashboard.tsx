@@ -218,7 +218,8 @@ const AdminDashboard = () => {
       }
 
       console.log('Contest deleted successfully, reloading data...');
-      alert('✅ Contest deleted successfully!');
+  alert('✅ Contest deleted successfully!');
+  try { window.dispatchEvent(new CustomEvent('contest:refresh')); } catch {}
       
       // Reload contests
       console.log('Reloading contests...');
