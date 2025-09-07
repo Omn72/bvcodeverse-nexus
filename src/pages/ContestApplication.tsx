@@ -3,8 +3,7 @@ import { motion } from 'framer-motion';
 import { FileText, Send, Trophy, Clock, Users, Star } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
-import { submitContestApplication, getActiveContests, type Contest } from '@/lib/supabase';
-import { submitApplicationLocal, getActiveContestsLocal, checkExistingApplication } from '@/lib/localDb';
+import { submitContestApplication, getActiveContests, type Contest, getApplicationsByUser } from '@/lib/supabase';
 import Layout from '@/components/Layout';
 
 const ContestApplication: React.FC = () => {
@@ -27,7 +26,7 @@ const ContestApplication: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [existingApplication, setExistingApplication] = useState<any | null>(null);
-  const [instantMode, setInstantMode] = useState(true); // INSTANT MODE for applications
+  // Always DB mode
 
   useEffect(() => {
     if (!user) {
@@ -40,37 +39,26 @@ const ContestApplication: React.FC = () => {
 
   // Check for existing application when contest selection changes
   useEffect(() => {
-    if (user && selectedContestId) {
-      const existingApp = checkExistingApplication(user.id, selectedContestId);
-      setExistingApplication(existingApp);
-    }
+    (async () => {
+      if (user && selectedContestId) {
+        const { data } = await getApplicationsByUser(user.id);
+        const found = (data || []).find(a => a.contest_id === selectedContestId);
+        setExistingApplication(found || null);
+      }
+    })();
   }, [user, selectedContestId]);
 
   const loadActiveContests = async () => {
     try {
-      if (instantMode) {
-        // INSTANT MODE: Load from local storage
-        const localContests = getActiveContestsLocal();
-        setContests(localContests);
-        if (contestId) {
-          // Pre-select contest from URL parameter
-          setSelectedContestId(contestId);
-        } else if (localContests.length > 0) {
-          setSelectedContestId(localContests[0].id);
-        }
-        return;
-      }
-      
-      // Original database mode
       const { data, error } = await getActiveContests();
       if (error) {
         console.error('Error loading contests:', error);
         setError('Failed to load contests');
       } else if (data) {
         setContests(data);
-        if (data.length > 0) {
-          setSelectedContestId(data[0].id); // Select first contest by default
-        }
+        // Pre-select from query if present, else first open
+        if (contestId && data.find(c => c.id === contestId)) setSelectedContestId(contestId);
+        else if (data.length > 0) setSelectedContestId(data[0].id);
       }
     } catch (err) {
       console.error('Error loading contests:', err);
@@ -88,6 +76,8 @@ const ContestApplication: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+  // Prevent resubmission if a submission is already in progress or completed
+  if (isSubmitting || submitted) return;
     setIsSubmitting(true);
     setError(null);
 
@@ -118,35 +108,19 @@ const ContestApplication: React.FC = () => {
         demo_link: formData.demoLink || undefined,
         team_members: formData.teamMembers || undefined,
       };
+      const { data, error } = await submitContestApplication(applicationData);
 
-      if (instantMode) {
-        // INSTANT MODE: Save to local storage - NO DELAYS!
-        const { data, error } = submitApplicationLocal(applicationData);
-        
-        if (error) {
-          if (error.code === 'DUPLICATE_APPLICATION') {
-            setExistingApplication(error.existingApplication);
-            setError('You have already submitted an application for this contest');
-          } else {
-            throw error;
-          }
+      if (error) {
+        if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+          setError('You have already applied to this contest!');
           setIsSubmitting(false);
           return;
         }
-
-        console.log('✅ INSTANT: Application submitted!', data);
-        setSubmitted(true);
-      } else {
-        // Original database mode
-        const { data, error } = await submitContestApplication(applicationData);
-
-        if (error) {
-          throw error;
-        }
-
-        console.log('Contest application submitted successfully:', data);
-        setSubmitted(true);
+        throw error;
       }
+
+      console.log('Contest application submitted successfully:', data);
+      setSubmitted(true);
       
       // Reset form
       setFormData({
@@ -163,7 +137,7 @@ const ContestApplication: React.FC = () => {
       console.error('Error submitting application:', error);
       if (error.message?.includes('unique')) {
         setError('You have already applied to this contest!');
-      } else if (error.message?.includes('timed out')) {
+  } else if (error.message?.includes('timed out')) {
         setError('Submission timed out. Please check your internet connection and try again.');
       } else {
         setError(error.message || 'Failed to submit application. Please try again.');
@@ -196,12 +170,7 @@ const ContestApplication: React.FC = () => {
           </div>
           <h2 className="text-3xl font-bold mb-4">Application Submitted!</h2>
           <p className="text-gray-400 mb-6">Thank you for applying to our coding contest. We'll review your application and get back to you soon.</p>
-          <button
-            onClick={() => setSubmitted(false)}
-            className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-lg text-white font-medium hover:shadow-lg transition-all"
-          >
-            Submit Another Application
-          </button>
+          {/* Resubmission disabled intentionally */}
         </motion.div>
       </div>
     );

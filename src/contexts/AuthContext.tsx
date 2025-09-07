@@ -23,16 +23,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get initial user
-    const getInitialUser = async () => {
-      console.log('Getting initial user...')
-      const { data: { user } } = await supabase.auth.getUser()
-      console.log('Initial user:', user)
-      setUser(user)
-      setLoading(false)
+    // Get initial user quickly from cached session (no network)
+    const initAuth = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const cachedUser = sessionData.session?.user ?? null
+        setUser(cachedUser)
+      } catch (e) {
+        console.warn('getSession failed, continuing without cached user')
+      } finally {
+        setLoading(false)
+      }
+
+      // Refresh user in the background (non-blocking) with a short timeout
+      const controller = new AbortController()
+      const t = setTimeout(() => controller.abort(), 3000)
+      supabase.auth.getUser()
+        .then(({ data: { user } }) => {
+          setUser(user ?? null)
+        })
+        .catch(() => { /* ignore background refresh errors */ })
+        .finally(() => clearTimeout(t))
     }
 
-    getInitialUser()
+    initAuth()
 
     // Listen for auth changes
     const {
@@ -40,8 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session?.user)
       const newUser = session?.user ?? null
-      setUser(newUser)
-      setLoading(false)
+  setUser(newUser)
+  setLoading(false)
       
       // Initialize user account if they just signed up or signed in for the first time
       if (newUser) {

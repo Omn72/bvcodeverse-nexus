@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,8 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { AlertCircle, CheckCircle, Users, Github, Calendar, Trophy, Target, Code2, Edit3, Save, X, User, Mail, Globe, Star } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getApplicationsLocal, createSampleApplicationsForUser } from '@/lib/localDb'
-import { ContestApplication } from '@/lib/supabase'
+import { ContestApplication, getApplicationsByUser, updateMyApplication, warmupDatabase } from '@/lib/supabase'
 import Layout from '@/components/Layout'
 
 interface ProfileStats {
@@ -40,15 +39,35 @@ const ProfilePage: React.FC = () => {
     teamMembers: []
   })
   const [saveLoading, setSaveLoading] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const hasCacheRef = useRef(false)
 
   // Load user applications and calculate stats
   useEffect(() => {
-    if (!user && !loading) {
-      navigate('/auth?redirect=profile')
-      return
-    }
-
     if (user && !loading) {
+      // 1) Instant paint from cache (if any)
+      try {
+        const cacheKey = `bv_apps_${user.id}`
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          const apps = JSON.parse(cached) as ContestApplication[]
+          hasCacheRef.current = true
+          setApplications(apps)
+          // fast stats
+          setProfileStats({
+            totalApplications: apps.length,
+            approvedApplications: apps.filter(a => a.status === 'Approved').length,
+            pendingApplications: apps.filter(a => a.status === 'Pending').length,
+            rejectedApplications: apps.filter(a => a.status === 'Rejected').length,
+          })
+        }
+      } catch {}
+
+      // 2) Warm up DB in the background (don’t block UI)
+      warmupDatabase().catch(() => {})
+
+      // 3) Fetch fresh data in background; show subtle syncing indicator
+      setIsSyncing(true)
       loadUserData()
     }
   }, [user, loading, navigate])
@@ -57,29 +76,29 @@ const ProfilePage: React.FC = () => {
     if (!user) return
     
     try {
-      setProfileLoading(true)
-      console.log('Loading applications for user:', user.id)
-      
-      const allApplications = getApplicationsLocal()
-      let userApplications = allApplications.filter(app => app.user_id === user.id)
-      console.log('Found applications:', userApplications.length)
-      
-      // Create sample applications if none exist (for testing)
-      if (userApplications.length === 0) {
-        console.log('No applications found, creating sample applications...')
-        const sampleApps = createSampleApplicationsForUser(user.id)
-        userApplications = sampleApps
-        console.log('Created sample applications:', userApplications.length)
+      // Only show blocking loader if we had no cache
+      if (!hasCacheRef.current) setProfileLoading(true)
+      console.log('Loading applications from DB for user:', user.id)
+
+      const { data, error } = await getApplicationsByUser(user.id)
+      if (error) {
+        console.error('Error fetching applications from DB:', error)
+        if (!hasCacheRef.current) setApplications([])
+      } else {
+        setApplications((data as any[]) || [])
+        // Update cache with fresh results
+        try {
+          localStorage.setItem(`bv_apps_${user.id}`, JSON.stringify((data as any[]) || []))
+        } catch {}
       }
       
-      setApplications(userApplications)
-      
       // Calculate stats
+      const apps = (Array.isArray((data as any[])) ? (data as any[]) : []) as ContestApplication[]
       const stats: ProfileStats = {
-        totalApplications: userApplications.length,
-        approvedApplications: userApplications.filter(app => app.status === 'Approved').length,
-        pendingApplications: userApplications.filter(app => app.status === 'Pending').length,
-        rejectedApplications: userApplications.filter(app => app.status === 'Rejected').length
+        totalApplications: apps.length,
+        approvedApplications: apps.filter(app => app.status === 'Approved').length,
+        pendingApplications: apps.filter(app => app.status === 'Pending').length,
+        rejectedApplications: apps.filter(app => app.status === 'Rejected').length
       }
       
       setProfileStats(stats)
@@ -88,6 +107,7 @@ const ProfilePage: React.FC = () => {
       console.error('Error loading user applications:', error)
     } finally {
       setProfileLoading(false)
+  setIsSyncing(false)
     }
   }
 
@@ -109,29 +129,24 @@ const ProfilePage: React.FC = () => {
     
     try {
       setSaveLoading(true)
-      
-      // Get all applications from local storage
-      const allApplications = getApplicationsLocal()
-      
-      // Update the specific application
-      const updatedApplications = allApplications.map(app => 
-        app.id === applicationId
-          ? {
-              ...app,
-              github_link: editForm.githubUrl,
-              team_members: editForm.teamMembers.join(','),
-              updated_at: new Date().toISOString()
-            }
-          : app
-      )
-      
-      // Save back to local storage
-      localStorage.setItem('bvcodeverse_applications', JSON.stringify(updatedApplications))
-      
-      // Refresh user applications
-      const userApplications = updatedApplications.filter(app => app.user_id === user.id)
-      setApplications(userApplications)
-      
+      const updates: any = {
+        github_link: editForm.githubUrl || null,
+        team_members: editForm.teamMembers.join(',') || null,
+      }
+      const { error } = await updateMyApplication(applicationId, user.id, updates)
+      if (error) {
+        console.error('Error saving application:', error)
+      }
+      // Optimistic cache update
+      try {
+        const next = applications.map(a => a.id === applicationId ? { ...a, ...updates, updated_at: new Date().toISOString() } as any : a)
+        setApplications(next as any)
+        localStorage.setItem(`bv_apps_${user.id}`, JSON.stringify(next))
+      } catch {}
+
+      // Refresh from DB (non-blocking UI)
+      const { data } = await getApplicationsByUser(user.id)
+      setApplications((data as any[]) || [])
       setEditingApp(null)
       setEditForm({ githubUrl: '', teamMembers: [] })
       
@@ -164,19 +179,22 @@ const ProfilePage: React.FC = () => {
     }
   }
 
-  if (loading || profileLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-muted-foreground">Loading your profile...</p>
-        </div>
-      </div>
-    )
-  }
+  // Don’t block the whole page; we’ll render and show a subtle syncing badge instead
 
   if (!user) {
-    return null
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-bold">Please sign in</h2>
+            <p className="text-muted-foreground">You need to be logged in to view your profile.</p>
+            <a href="/login?redirect=/profile" className="inline-flex items-center px-5 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90">
+              Go to Login
+            </a>
+          </div>
+        </div>
+      </Layout>
+    )
   }
 
   return (
@@ -205,6 +223,12 @@ const ProfilePage: React.FC = () => {
               <p className="text-muted-foreground flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 {user.email}
+                {isSyncing && (
+                  <span className="ml-2 inline-flex items-center gap-2 text-xs text-primary">
+                    <span className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                    Syncing…
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -241,29 +265,7 @@ const ProfilePage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-card/50 backdrop-blur-sm border-yellow-500/20 hover:border-yellow-500/40 transition-all duration-300 hover:shadow-[0_0_20px_rgba(234,179,8,0.1)]">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                Pending
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-400">{profileStats.pendingApplications}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-card/50 backdrop-blur-sm border-red-500/20 hover:border-red-500/40 transition-all duration-300 hover:shadow-[0_0_20px_rgba(239,68,68,0.1)]">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                <X className="h-4 w-4" />
-                Rejected
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-400">{profileStats.rejectedApplications}</div>
-            </CardContent>
-          </Card>
+          {/* Pending/Rejected cards removed per request */}
         </motion.div>
 
         {/* Applications Section */}
@@ -280,11 +282,20 @@ const ProfilePage: React.FC = () => {
           {applications.length === 0 ? (
             <Card className="bg-card/30 backdrop-blur-sm border-border/50">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Code2 className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-xl font-semibold mb-2">No Applications Yet</h3>
-                <p className="text-muted-foreground text-center max-w-md">
-                  You haven't submitted any contest applications yet. Start building amazing projects and join our contests!
-                </p>
+                {profileLoading ? (
+                  <>
+                    <div className="w-16 h-16 rounded-full border-2 border-primary/20 border-t-primary animate-spin mb-4" />
+                    <p className="text-muted-foreground">Loading your applications…</p>
+                  </>
+                ) : (
+                  <>
+                    <Code2 className="h-16 w-16 text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">No Applications Yet</h3>
+                    <p className="text-muted-foreground text-center max-w-md">
+                      You haven't submitted any contest applications yet. Start building amazing projects and join our contests!
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -303,12 +314,14 @@ const ProfilePage: React.FC = () => {
                           <CardTitle className="text-xl text-foreground flex items-center gap-3">
                             <Star className="h-5 w-5 text-primary" />
                             {application.project_name}
-                            <Badge className={`${getStatusColor(application.status)} border`}>
-                              <div className="flex items-center gap-1">
-                                {getStatusIcon(application.status)}
-                                {application.status}
-                              </div>
-                            </Badge>
+                            {application.status === 'Approved' && (
+                              <Badge className={`${getStatusColor('Approved')} border`}>
+                                <div className="flex items-center gap-1">
+                                  {getStatusIcon('Approved')}
+                                  Approved
+                                </div>
+                              </Badge>
+                            )}
                           </CardTitle>
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1">
@@ -436,8 +449,10 @@ const ProfilePage: React.FC = () => {
                       {/* Project Details */}
                       <div className="space-y-4">
                         <div>
-                          <Label className="text-sm font-medium text-foreground">Contest ID</Label>
-                          <p className="text-sm text-muted-foreground mt-1">{application.contest_id}</p>
+                          <Label className="text-sm font-medium text-foreground">Contest</Label>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {(application as any).contests?.title || application.contest_id}
+                          </p>
                         </div>
                         
                         <div>

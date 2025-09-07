@@ -27,19 +27,10 @@ import {
   getContestStats,
   updateContest,
   deleteContest,
-  adminSignIn,
-  testDatabaseConnection,
+  approveAllPendingApplications,
   type Contest,
   type ContestApplication 
 } from '@/lib/supabase';
-import { 
-  createContestLocal, 
-  getContestsLocal, 
-  getApplicationsLocal,
-  initializeLocalData,
-  deleteContestLocal,
-  updateContestStatusLocal
-} from '@/lib/localDb';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'contests' | 'applications'>('overview');
@@ -50,7 +41,7 @@ const AdminDashboard = () => {
   const [showAddContest, setShowAddContest] = useState(false);
   const [showApplications, setShowApplications] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [instantMode, setInstantMode] = useState(true); // INSTANT MODE - No database delays!
+  // Always use database-backed data
   const navigate = useNavigate();
 
   // Load data from database
@@ -58,32 +49,7 @@ const AdminDashboard = () => {
     try {
       setLoading(true);
       
-      if (instantMode) {
-        // INSTANT MODE: Load from local storage - BLAZING FAST!
-        console.log('🚀 INSTANT MODE: Loading from local storage...');
-        initializeLocalData(); // Initialize with sample data if needed
-        
-        const localContests = getContestsLocal();
-        const localApplications = getApplicationsLocal();
-        
-        setContests(localContests);
-        setApplications(localApplications);
-        setStats({
-          totalContests: localContests.length,
-          activeContests: localContests.filter(c => c.status === 'Open').length,
-          totalApplications: localApplications.length,
-          pendingApplications: localApplications.filter(a => a.status === 'Pending').length,
-        });
-        
-        console.log('✅ INSTANT LOAD COMPLETE:', { 
-          contests: localContests.length, 
-          applications: localApplications.length 
-        });
-        setLoading(false);
-        return;
-      }
-      
-      // Original slow database mode
+  // Database mode
       console.log('Loading dashboard data...');
       
       // Load contests
@@ -147,7 +113,7 @@ const AdminDashboard = () => {
     navigate('/admin/login');
   };
 
-  const testDatabaseConnection = async () => {
+  const handleTestDatabaseConnection = async () => {
     try {
       console.log('Testing database connection...');
       const { data, error } = await getAllContests();
@@ -185,27 +151,7 @@ const AdminDashboard = () => {
     console.log('User confirmed delete, proceeding...');
 
     try {
-      if (instantMode) {
-        // INSTANT MODE: Delete from local storage - NO DELAYS!
-        console.log('🚀 INSTANT MODE: Deleting contest locally...');
-        const { data, error } = deleteContestLocal(contestId);
-        
-        if (error) {
-          alert(`❌ Error: ${error.message}`);
-          return;
-        }
-
-        console.log('✅ INSTANT: Contest deleted!', data);
-        alert('✅ Contest deleted instantly!');
-        
-        // Update local state immediately
-        setContests(prev => prev.filter(c => c.id !== contestId));
-        setApplications(prev => prev.filter(a => a.contest_id !== contestId));
-        
-        return;
-      }
-      
-      // Original database mode
+      // Database mode
       console.log('Calling deleteContest function...');
       const { data, error } = await deleteContest(contestId);
       
@@ -254,37 +200,21 @@ const AdminDashboard = () => {
     }
 
     try {
-      if (instantMode) {
-        // Instant mode - update local storage immediately
-        const success = updateContestStatusLocal(contestId, newStatus);
-        
-        if (success) {
-          // Update local state immediately
-          setContests(prev => prev.map(contest => 
-            contest.id === contestId ? { ...contest, status: newStatus } : contest
-          ));
-          
-          alert(`⚡ Contest status instantly changed to "${newStatus}"! (Using Local Storage)`);
-        } else {
-          alert('❌ Contest not found in local storage');
-        }
-      } else {
-        // Database mode
-        const { error } = await updateContest(contestId, { status: newStatus });
-        
-        if (error) {
-          console.error('Error updating contest status:', error);
-          alert(`Error updating contest: ${error.message}`);
-          return;
-        }
+      // Database mode
+      const { error } = await updateContest(contestId, { status: newStatus });
+      
+      if (error) {
+        console.error('Error updating contest status:', error);
+        alert(`Error updating contest: ${error.message}`);
+        return;
+      }
 
-        alert(`✅ Contest status changed to "${newStatus}"!`);
-        
-        // Reload contests
-        const { data: contestsData } = await getAllContests();
-        if (contestsData) {
-          setContests(contestsData);
-        }
+      alert(`✅ Contest status changed to "${newStatus}"!`);
+      
+      // Reload contests
+      const { data: contestsData } = await getAllContests();
+      if (contestsData) {
+        setContests(contestsData);
       }
 
     } catch (err: any) {
@@ -371,38 +301,7 @@ const AdminDashboard = () => {
       
       console.log('Submitting contest:', newContest);
       
-      if (instantMode) {
-        // INSTANT MODE: Save to local storage - NO DELAYS!
-        console.log('🚀 INSTANT MODE: Creating contest locally...');
-        const { data, error } = createContestLocal(newContest);
-        
-        setIsSubmitting(false);
-        if (error) {
-          alert(`❌ Error: ${error.message}`);
-        } else {
-          console.log('✅ INSTANT: Contest created!', data);
-          alert('✅ Contest created instantly!');
-          
-          // Update local state immediately
-          setContests(prev => [data, ...prev]);
-          
-          setShowAddContest(false);
-          // Reset form
-          setFormData({
-            title: '',
-            description: '',
-            category: 'Web Development',
-            prizePool: '',
-            duration: '48 hours',
-            maxTeamSize: 4,
-            deadline: '',
-            status: 'Draft'
-          });
-        }
-        return;
-      }
-      
-      // Original slow database mode
+  // Database mode
       createContest(newContest).then(({ data, error }) => {
         setIsSubmitting(false);
         if (error) {
@@ -687,30 +586,7 @@ const AdminDashboard = () => {
                 <h1 className="text-xl font-bold">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
-              {/* INSTANT MODE TOGGLE */}
-              <div className="flex items-center space-x-2">
-                <span className={`text-sm ${instantMode ? 'text-green-400' : 'text-gray-400'}`}>
-                  {instantMode ? '🚀 INSTANT MODE' : '🐌 Database Mode'}
-                </span>
-                <button
-                  onClick={() => {
-                    setInstantMode(!instantMode);
-                    if (!instantMode) {
-                      alert('🚀 INSTANT MODE ACTIVATED!\n\nNo more waiting - everything is now lightning fast!');
-                      loadData(); // Reload with instant mode
-                    } else {
-                      alert('🐌 Switched to Database Mode\n\nThis will be slower but uses real database.');
-                    }
-                  }}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                    instantMode 
-                      ? 'bg-green-500 text-white hover:bg-green-600' 
-                      : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-                  }`}
-                >
-                  {instantMode ? 'FAST' : 'SLOW'}
-                </button>
-              </div>
+              {/* Removed Instant Mode toggle: Dashboard always uses real database */}
               
               <span className="text-gray-400">Welcome, {localStorage.getItem('adminUser')}</span>
               <Button
@@ -837,7 +713,7 @@ const AdminDashboard = () => {
               <h2 className="text-2xl font-bold text-white">Manage Contests</h2>
               <div className="flex space-x-3">
                 <Button
-                  onClick={testDatabaseConnection}
+                  onClick={handleTestDatabaseConnection}
                   variant="outline"
                   className="border-cyan-500 text-cyan-400 hover:bg-cyan-500 hover:text-white flex items-center space-x-2"
                 >
@@ -975,6 +851,23 @@ const AdminDashboard = () => {
                 className="bg-gray-800 border-gray-600 hover:bg-gray-700"
               >
                 Refresh Applications
+              </Button>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                onClick={async () => {
+                  if (!confirm('Approve all pending applications?')) return;
+                  const { error } = await approveAllPendingApplications();
+                  if (error) {
+                    alert(`Error approving: ${error.message}`);
+                  } else {
+                    alert('All pending applications approved');
+                    loadData();
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                Approve All Pending
               </Button>
             </div>
             <div className="space-y-4">
