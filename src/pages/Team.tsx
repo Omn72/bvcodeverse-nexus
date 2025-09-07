@@ -1,6 +1,6 @@
 import Layout from '@/components/Layout';
 import Footer from '@/components/Footer';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Github, Linkedin, User } from 'lucide-react';
 import { useState } from 'react';
@@ -98,9 +98,29 @@ export function TeamCard({
   className,
   index,
   ...props
-}: React.ComponentProps<'div'> & { member: TeamMember; index: number }) {
+}: React.ComponentProps<typeof motion.div> & { member: TeamMember; index: number }) {
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // 3D tilt motion values
+  const rotateX = useMotionValue(0);
+  const rotateY = useMotionValue(0);
+
+  const handleMouseMove: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const px = (x / rect.width) * 2 - 1; // -1 to 1
+    const py = (y / rect.height) * 2 - 1; // -1 to 1
+    const max = 12; // max tilt in degrees
+    rotateX.set(-py * max);
+    rotateY.set(px * max);
+  };
+
+  const handleMouseLeave: React.MouseEventHandler<HTMLDivElement> = () => {
+    rotateX.set(0);
+    rotateY.set(0);
+  };
 
   // Generate a fallback avatar URL
   const getFallbackAvatar = (name: string) => {
@@ -139,22 +159,25 @@ export function TeamCard({
         }
       }}
       whileTap={{ scale: 0.95 }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: 'preserve-3d' as const }}
       {...props}
     >
       {/* Background Effects */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-md rounded-xl"></div>
-      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-transparent to-purple-500/5 rounded-xl"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-md rounded-xl" style={{ transform: 'translateZ(-40px)' }}></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/5 via-transparent to-purple-500/5 rounded-xl" style={{ transform: 'translateZ(-60px)' }}></div>
       
       {/* Profile Image */}
-      <div className="relative mb-4">
+    <div className="relative mb-4" style={{ transform: 'translateZ(30px)' }}>
         <motion.div
-          className="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-white/30 shadow-lg relative bg-gray-800"
+          className="w-24 h-24 mx-auto rounded-full overflow-hidden border-2 border-white/30 shadow-lg relative bg-gray-800 group hover:cursor-pointer"
           whileHover={{ 
             rotate: 5,
-            scale: 1.1,
             boxShadow: "0 0 30px rgba(34, 211, 238, 0.3)"
           }}
           transition={{ duration: 0.3 }}
+      style={{ transformStyle: 'preserve-3d' as const }}
         >
           {!imageLoaded && !imageError && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -172,7 +195,7 @@ export function TeamCard({
               alt={member.name}
               width={96}
               height={96}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${
+              className={`w-full h-full object-cover transform scale-125 hover:scale-[1.9] transition duration-300 ease-out will-change-transform ${
                 imageLoaded ? 'opacity-100' : 'opacity-0'
               }`}
               onLoad={() => {
@@ -193,8 +216,13 @@ export function TeamCard({
           )}
         </motion.div>
         
-        {/* Glow effect */}
-        <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-cyan-400/20 to-purple-500/20 blur-md -z-10"></div>
+        {/* 3D Rotating Glow */}
+        <motion.div 
+          className="absolute inset-0 w-24 h-24 mx-auto rounded-full bg-gradient-to-r from-cyan-400/20 to-purple-500/20 blur-md -z-10"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'linear' }}
+          style={{ transform: 'translateZ(-20px)' }}
+        ></motion.div>
       </div>
 
       {/* Member Info with Enhanced Animations */}
@@ -203,6 +231,7 @@ export function TeamCard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 + (index * 0.1), duration: 0.5 }}
+        style={{ transform: 'translateZ(20px)' }}
       >
         <motion.h3 
           className="text-lg font-semibold text-white"
@@ -226,6 +255,7 @@ export function TeamCard({
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.8 + (index * 0.1), duration: 0.4, type: "spring" }}
+        style={{ transform: 'translateZ(25px)' }}
       >
         {member.linkedin && (
           <motion.a
@@ -280,6 +310,7 @@ export function TeamCard({
           borderColor: "rgba(34, 211, 238, 0.3)",
         }}
         transition={{ duration: 0.3 }}
+        style={{ transform: 'translateZ(10px)' }}
       />
     </motion.div>
   );
@@ -414,6 +445,7 @@ const Team = () => {
                     type: "spring",
                     stiffness: 100
                   }}
+                  style={{ perspective: 1000 }}
                 >
                   <TeamCard
                     className="bg-black/20 backdrop-blur-lg border border-white/10 relative shadow-xl hover:shadow-2xl hover:shadow-cyan-400/10 transition-all duration-300"
