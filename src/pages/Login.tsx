@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import Layout from '@/components/Layout'
 import { signIn, resendConfirmation } from '@/lib/supabase'
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 const Login = () => {
   const [email, setEmail] = useState('')
@@ -15,6 +16,20 @@ const Login = () => {
   const [resendLoading, setResendLoading] = useState(false)
   const [resendMessage, setResendMessage] = useState('')
   const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAuth()
+
+  // Determine safe redirect target (only allow same-origin paths)
+  const params = new URLSearchParams(location.search)
+  const rawRedirect = params.get('redirect') || ''
+  const redirectTo = rawRedirect.startsWith('/') ? rawRedirect : '/dashboard'
+
+  // If user becomes authenticated (e.g., after a delayed auth callback), redirect automatically
+  useEffect(() => {
+    if (user) {
+      navigate(redirectTo, { replace: true })
+    }
+  }, [user, navigate, redirectTo])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +38,16 @@ const Login = () => {
     setNeedsConfirmation(false)
 
     try {
-      const { data, error } = await signIn(email, password)
+      // Add a client-side timeout so the button doesn't spin forever
+      const TIMEOUT_MS = 8000
+      const timeout = new Promise<{ data: any, error: any }>((resolve) => {
+        setTimeout(() => resolve({ data: null as any, error: { message: 'Login timeout. Please try again.' } }), TIMEOUT_MS)
+      })
+
+      const { data, error } = await Promise.race([
+        signIn(email, password) as any,
+        timeout,
+      ])
       
       if (error) {
         // Handle specific error cases
@@ -35,8 +59,9 @@ const Login = () => {
         } else {
           setError(error.message)
         }
-      } else if (data.user) {
-        navigate('/dashboard')
+  } else if (data?.user || data?.session) {
+        // Successful login; go to redirect target (or dashboard)
+        navigate(redirectTo, { replace: true })
       }
     } catch (err) {
       setError('An unexpected error occurred')

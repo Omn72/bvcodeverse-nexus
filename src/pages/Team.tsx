@@ -1,5 +1,4 @@
 import Layout from '@/components/Layout';
-import Footer from '@/components/Footer';
 import { motion, useMotionValue } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Github, Linkedin, User } from 'lucide-react';
@@ -498,7 +497,6 @@ const Team = () => {
           </div>
         </motion.section>
       </div>
-      <Footer />
     </Layout>
   );
 };

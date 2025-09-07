@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Refresh user in the background (non-blocking) with a short timeout
       const controller = new AbortController()
       const t = setTimeout(() => controller.abort(), 3000)
-      supabase.auth.getUser()
+  supabase.auth.getUser()
         .then(({ data: { user } }) => {
           setUser(user ?? null)
         })
@@ -68,7 +68,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      // Best-effort cache clear for current user
+      const current = user
+      if (current?.id) {
+        try { localStorage.removeItem(`bv_apps_${current.id}`) } catch {}
+      }
+      await supabase.auth.signOut()
+    } finally {
+      // Immediately reflect logout in UI; onAuthStateChange will also fire
+      setUser(null)
+      setLoading(false)
+    }
   }
 
   const value = {

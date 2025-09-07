@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Layout from '@/components/Layout';
-import Footer from '@/components/Footer';
 import { getAllContests, type Contest, createContest, testDatabaseConnection, getSupabaseInfo, getSupabaseRestParams } from '@/lib/supabase';
 import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
@@ -287,7 +286,6 @@ const ContestListDB: React.FC = () => {
           )}
         </div>
       </section>
-      <Footer />
     </Layout>
   );
 };

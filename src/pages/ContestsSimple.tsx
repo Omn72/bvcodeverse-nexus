@@ -1,7 +1,6 @@
 import Layout from '@/components/Layout';
 import { Calendar, Clock, MapPin, Trophy, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { createContest, testDatabaseConnection, warmupDatabase } from '@/lib/supabase';
@@ -240,7 +239,6 @@ const ContestsSimple = () => {
           </div>
         </div>
       </section>
-      <Footer />
     </Layout>
   );
 };

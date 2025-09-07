@@ -3,7 +3,6 @@ import Hero from '@/components/Hero';
 import AboutUs from '@/components/CollegeBranding';
 import BVCodeVerseTimeline from '@/components/BVCodeVerseTimeline';
 import CTA from '@/components/CTA';
-import Footer from '@/components/Footer';
 
 const Index = () => {
   return (
@@ -12,7 +11,6 @@ const Index = () => {
       <AboutUs />
       <BVCodeVerseTimeline />
       <CTA />
-      <Footer />
     </Layout>
   );
 };

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut, User, ChevronDown, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,6 +9,7 @@ const Navigation = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   // Debug log on component mount
   useEffect(() => {
@@ -46,6 +47,8 @@ const Navigation = () => {
       await signOut();
       setExpanded(false);
       setShowUserMenu(false);
+  // Hard navigate away to clear any protected page state
+  navigate('/', { replace: true });
     } catch (error) {
       console.error('Error signing out:', error);
     }
