@@ -230,12 +230,14 @@ const Navigation = () => {
 
         {expanded && (
           <nav className="md:hidden">
-            {/* Backdrop overlay */}
+            {/* Backdrop overlay (below the panel) */}
             <div 
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]" 
               onClick={() => setExpanded(false)}
             />
-            <div className="flex flex-col pt-8 pb-4 space-y-6">
+            {/* Dropdown panel (above overlay) */}
+            <div className="fixed inset-x-0 top-0 z-[9999] bg-black/95 border-b border-gray-800 pt-safe px-4 pb-6 max-h-screen overflow-y-auto">
+              <div className="flex flex-col pt-6 space-y-6">
               {navItems.map((item) => (
                 <Link 
                   key={item.name}
@@ -321,6 +323,7 @@ const Navigation = () => {
                   </div>
                 </>
               )}
+              </div>
             </div>
           </nav>
         )}

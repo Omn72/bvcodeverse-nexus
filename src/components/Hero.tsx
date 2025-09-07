@@ -131,7 +131,7 @@ const Hero = () => {
                     }}
                     onBlur={() => setTimeout(() => setShowResults(false), 200)}
                     placeholder="Search developers by name, college, or skills..." 
-                    className="block w-full py-4 pr-6 text-white placeholder-gray-500 bg-black border border-transparent rounded-full pl-14 sm:py-5 focus:border-transparent focus:ring-0" 
+                    className="block w-full py-3 sm:py-5 pr-6 text-white placeholder-gray-500 bg-black border border-transparent rounded-full pl-12 sm:pl-14 focus:border-transparent focus:ring-0" 
                   />
                   
                   {isSearching && (
@@ -204,7 +204,7 @@ const Hero = () => {
               <div className="sm:absolute flex sm:right-1.5 sm:inset-y-1.5 mt-4 sm:mt-0">
                 <button 
                   type="submit" 
-                  className="inline-flex items-center justify-center w-full px-5 py-5 text-sm font-semibold tracking-widest text-black uppercase transition-all duration-200 bg-white rounded-full sm:w-auto sm:py-3 hover:opacity-90"
+                  className="inline-flex items-center justify-center w-full px-4 py-2.5 text-xs sm:text-sm font-medium sm:font-semibold tracking-wide sm:tracking-widest text-black uppercase transition-all duration-200 bg-white rounded-full sm:w-auto sm:py-3 hover:opacity-90"
                 >
                   Join the Newsletter
                 </button>
@@ -225,15 +225,15 @@ const Hero = () => {
                 />
               )}
             </Suspense>
-            {/* Bottom overlay to hide cut-off legs */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent z-15 pointer-events-none"></div>
+    {/* Bottom overlay to blend legs into background (below ribbon) */}
+    <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none"></div>
           </div>
         </div>
         
-      </div>
+  </div>
 
-      {/* Full-width Moving Ribbon - outside container to span entire page width */}
-      <div className="w-full overflow-hidden mt-8 z-10">
+  {/* Full-width Moving Ribbon - overlay robot legs on desktop */}
+  <div className="relative lg:absolute left-0 right-0 lg:bottom-0 w-full overflow-hidden mt-8 lg:mt-0 z-30">
         <div className="bg-black py-3 relative min-h-[44px] flex items-center">
           {/* Robot-style gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 via-purple-500/15 to-transparent blur-sm"></div>
