@@ -16,6 +16,16 @@ const Navigation = () => {
     console.log('Navigation component mounted', { user: !!user, expanded, showUserMenu });
   }, []);
 
+  // Lock body scroll when mobile menu open
+  useEffect(() => {
+    if (expanded) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [expanded]);
+
   const navItems = [
     { name: 'Team', path: '/team' },
     { name: 'Events', path: '/events' },
@@ -81,6 +91,9 @@ const Navigation = () => {
               <img 
                 src="/logo.png" 
                 alt="BVCodeVerse Logo" 
+                width="48" height="48"
+                decoding="async"
+                loading="eager"
                 className="h-12 w-12 object-contain filter brightness-125 transform scale-125"
               />
             </Link>
@@ -217,6 +230,11 @@ const Navigation = () => {
 
         {expanded && (
           <nav className="md:hidden">
+            {/* Backdrop overlay */}
+            <div 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm" 
+              onClick={() => setExpanded(false)}
+            />
             <div className="flex flex-col pt-8 pb-4 space-y-6">
               {navItems.map((item) => (
                 <Link 

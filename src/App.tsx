@@ -18,6 +18,9 @@ import ContestApplication from "./pages/ContestApplication";
 import ContestsFast from "./pages/ContestsFast";
 import ContestsSimple from "./pages/ContestsSimple";
 import ContestListDB from "./pages/ContestListDB";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import CodeOfConduct from "./pages/CodeOfConduct";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 import DatabaseTest from "./pages/DatabaseTest";
@@ -49,6 +52,9 @@ const App = () => (
             <Route path="/apply-contest" element={<ContestApplication />} />
             <Route path="/database-test" element={<DatabaseTest />} />
             <Route path="/database-debug" element={<DatabaseDebug />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/code-of-conduct" element={<CodeOfConduct />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={
               <AdminRoute>

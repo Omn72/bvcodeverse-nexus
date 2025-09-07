@@ -1,5 +1,6 @@
 import { Code2, Github, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
+// Terms modal replaced with a dedicated page link for reliability
 
 const Footer = () => {
   const quickLinks = [
@@ -26,6 +27,9 @@ const Footer = () => {
               <img 
                 src="/logo.png" 
                 alt="BVCodeVerse Logo" 
+                width="128" height="128"
+                decoding="async"
+                loading="lazy"
                 className="h-32 w-32 object-contain filter brightness-2"
               />
               <span className="font-bold text-xl gradient-text"></span>
@@ -129,9 +133,9 @@ const Footer = () => {
               </a>
             </div>
             <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-primary transition-colors">Code of Conduct</a>
+              <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-primary transition-colors underline-offset-2 hover:underline">Terms & Conditions</Link>
+              <Link to="/code-of-conduct" className="hover:text-primary transition-colors">Code of Conduct</Link>
             </div>
           </div>
         </div>
