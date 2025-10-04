@@ -30,7 +30,7 @@ const CTA = () => {
           </div>
           
           <h2 className="text-4xl md:text-6xl font-bold text-white">
-            Ready to <span className="gradient-text">perticipate</span>?
+            Ready to <span className="gradient-text">participate</span>?
           </h2>
           
           <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
