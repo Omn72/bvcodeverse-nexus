@@ -461,7 +461,7 @@ const Contests = () => {
                 <div className="w-12 h-12 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-white font-bold">4</span>
                 </div>
-                <h3 className="font-semibold text-white mb-2">Win</h3>
+                <h3 className="font-semibold text-white mb-2">ready to perticipate</h3>
                 <p className="text-gray-400 text-sm">Get recognized and win prizes</p>
               </div>
             </div>

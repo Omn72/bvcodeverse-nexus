@@ -1,4 +1,15 @@
 import React, { useState } from 'react';
+import { SocialTooltip } from './ui/social-media'
+import { Github, Linkedin, Mail, Instagram, Twitter } from 'lucide-react'
+
+// Social links data
+const SOCIAL_ITEMS = [
+  { href: 'https://github.com/BV-CodeVerse/BV-CodeVerse', ariaLabel: 'GitHub', tooltip: 'GitHub', color: '#9aa7b2', icon: <Github /> },
+  { href: 'https://www.linkedin.com/company/bvcodeverse/posts/?feedView=all', ariaLabel: 'LinkedIn', tooltip: 'LinkedIn', color: '#9aa7b2', icon: <Linkedin /> },
+  { href: 'https://www.instagram.com/bvcodeverse/', ariaLabel: 'Instagram', tooltip: 'Instagram', color: '#9aa7b2', icon: <Instagram /> },
+  { href: 'https://x.com/bvcodeverse', ariaLabel: 'Twitter', tooltip: 'Twitter', color: '#9aa7b2', icon: <Twitter /> },
+  { href: 'mailto:bvcodeverse@outlook.com', ariaLabel: 'Email', tooltip: 'Email', color: '#9aa7b2', icon: <Mail /> },
+]
 
 const AboutUs = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -7,6 +18,10 @@ const AboutUs = () => {
   return (
     <section className="relative py-16 bg-black text-white">
       <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8 text-center">
+        {/* Social links above heading */}
+        <div className="mb-6">
+          <SocialTooltip items={SOCIAL_ITEMS} />
+        </div>
         {/* About Us Heading */}
         <h2 className="text-4xl md:text-5xl font-extrabold leading-tight mb-4">
           About Us

@@ -30,7 +30,7 @@ const CTA = () => {
           </div>
           
           <h2 className="text-4xl md:text-6xl font-bold text-white">
-            Ready to <span className="gradient-text">Win</span> Big?
+            Ready to <span className="gradient-text">perticipate</span>?
           </h2>
           
           <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
@@ -90,23 +90,14 @@ const CTA = () => {
             </Link>
           </div>
 
-          {/* Contest Statistics */}
+          {/* Explore Dashboard CTA (replaces stats) */}
           <div className="mt-12 text-center">
-            <p className="text-sm text-gray-400 mb-4">Current Contest Stats</p>
-            <div className="flex justify-center items-center space-x-8 text-gray-400">
-              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">$5,000</div>
-              <div className="w-px h-8 bg-gray-600"></div>
-              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">48H</div>
-              <div className="w-px h-8 bg-gray-600"></div>
-              <div className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">150+</div>
-            </div>
-            <div className="flex justify-center items-center space-x-8 text-xs text-gray-500 mt-2">
-              <span>Prize Pool</span>
-              <span className="w-4"></span>
-              <span>Duration</span>
-              <span className="w-4"></span>
-              <span>Participants</span>
-            </div>
+            <p className="text-sm text-gray-400 mb-4">Explore more contest data and leaderboards</p>
+            <Link to="/dashboard" className="inline-block">
+              <Button className="btn-neon group px-8 py-4 text-lg font-semibold rounded-xl bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                Explore Dashboard
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

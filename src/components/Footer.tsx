@@ -20,9 +20,9 @@ const Footer = () => {
   return (
     <footer className="bg-card border-t border-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
           {/* Brand */}
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-sm lg:max-w-none">
             <Link to="/" className="flex items-center space-x-2">
               <img 
                 src="/logo.png" 
@@ -30,24 +30,63 @@ const Footer = () => {
                 width="128" height="128"
                 decoding="async"
                 loading="lazy"
-                className="h-32 w-32 object-contain filter brightness-2"
+                className="h-16 w-16 md:h-24 md:w-24 lg:h-20 lg:w-20 object-contain filter brightness-2"
               />
-              <span className="font-bold text-xl gradient-text"></span>
+              {/* intentionally left blank: logo only on the left column */}
             </Link>
-            <p className="text-muted-foreground leading-relaxed max-w-xs">
+            <p className="text-muted-foreground leading-relaxed">
               Empowering the next generation of coders through collaboration, innovation, and continuous learning.
             </p>
             <div className="flex items-center space-x-4">
-              <Github className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors nav-glow" />
-              <Linkedin className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors nav-glow" />
-              <Mail className="h-5 w-5 text-muted-foreground hover:text-primary cursor-pointer transition-colors nav-glow" />
+              <a href="https://github.com/" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="p-2 rounded-md hover:bg-white/5">
+                <Github className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors nav-glow" />
+                <span className="sr-only">GitHub</span>
+              </a>
+              <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="p-2 rounded-md hover:bg-white/5">
+                <Linkedin className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors nav-glow" />
+                <span className="sr-only">LinkedIn</span>
+              </a>
+              <a href="mailto:bvcodeverse@outlook.com" aria-label="Email" className="p-2 rounded-md hover:bg-white/5">
+                <Mail className="h-5 w-5 text-muted-foreground hover:text-primary transition-colors nav-glow" />
+                <span className="sr-only">Email</span>
+              </a>
             </div>
           </div>
 
           {/* Quick Links */}
-          <div>
+          {/* Quick Links & Resources: show accordion on mobile, lists on md+ */}
+          <div className="md:hidden space-y-4">
+            <details className="bg-transparent border border-border rounded-lg p-3">
+              <summary className="font-semibold text-foreground cursor-pointer">Quick Links</summary>
+              <ul className="mt-3 space-y-2">
+                {quickLinks.map((link) => (
+                  <li key={link.name}>
+                    <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors block">
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+
+            <details className="bg-transparent border border-border rounded-lg p-3">
+              <summary className="font-semibold text-foreground cursor-pointer">Resources</summary>
+              <ul className="mt-3 space-y-2">
+                {resources.map((resource) => (
+                  <li key={resource.name}>
+                    <Link to={resource.path} className="text-muted-foreground hover:text-primary transition-colors block">
+                      {resource.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
+
+          {/* Desktop lists */}
+          <div className="hidden md:block lg:col-span-1">
             <h3 className="font-semibold text-foreground mb-4">Quick Links</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-3 mb-6">
               {quickLinks.map((link) => (
                 <li key={link.name}>
                   <Link 
@@ -59,10 +98,7 @@ const Footer = () => {
                 </li>
               ))}
             </ul>
-          </div>
 
-          {/* Resources */}
-          <div>
             <h3 className="font-semibold text-foreground mb-4">Resources</h3>
             <ul className="space-y-3">
               {resources.map((resource) => (
@@ -79,7 +115,7 @@ const Footer = () => {
           </div>
 
           {/* Contact */}
-          <div>
+          <div className="lg:col-span-1">
             <h3 className="font-semibold text-foreground mb-4">Get in Touch</h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3 text-muted-foreground">
@@ -97,12 +133,12 @@ const Footer = () => {
             </div>
 
             {/* Join CTA */}
-            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 w-full md:w-80">
               <h4 className="font-semibold text-foreground mb-2">Drop Your Feedback</h4>
               <p className="text-sm text-muted-foreground mb-3">
                 We're listening 👂🏼. Share your thoughts
               </p>
-              <button className="w-full btn-neon px-4 py-2 rounded-lg text-sm font-medium">
+              <button className="w-full md:w-auto btn-neon px-4 py-2 rounded-lg text-sm font-medium">
                 FeedBack
               </button>
             </div>

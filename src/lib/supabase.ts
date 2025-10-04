@@ -634,11 +634,31 @@ export const warmupDatabase = async () => {
       .select('id')
       .limit(1)
     
-    if (error && !error.message?.includes('relation "contests" does not exist')) {
+    if (error) {
+      const msg = (error && (error.message || (error as any).code)) || String(error)
+
+      // Common case: SQL not run yet
+      if (msg.includes('relation "contests" does not exist')) {
+        console.warn('Database tables not found. Please run the SQL setup: DATABASE_SETUP_REQUIRED.md -> database-setup.sql')
+        return {
+          success: false,
+          error: { message: 'Database not initialized: run database-setup.sql in your Supabase project (see DATABASE_SETUP_REQUIRED.md)' },
+        }
+      }
+
+      // Network / fetch errors when the Supabase host cannot be reached
+      if (msg.toLowerCase().includes('fetch failed') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('failed to fetch')) {
+        console.error('Network error while contacting Supabase:', error)
+        return {
+          success: false,
+          error: { message: 'Network error: unable to reach Supabase. Check internet connection, firewall, or proxy settings.' },
+        }
+      }
+
       console.error('Database warmup failed:', error)
       return { success: false, error }
     }
-    
+
     console.log('Database connection warmed up successfully')
     return { success: true, error: null }
   } catch (err: any) {
