@@ -103,7 +103,7 @@ const Hero = () => {
               Innovate. Collaborate. Elevate.
             </h1>
             <p className="mt-4 text-lg font-normal text-gray-400 sm:mt-8">
-             The BVCodeVerse, BVCOEL official Coding Hub.
+            Welcome to BVCodeVerse, BVCOEL's official coding club.
             </p>
 
             <div className="mt-8 sm:mt-12">

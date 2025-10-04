@@ -138,9 +138,14 @@ const Footer = () => {
               <p className="text-sm text-muted-foreground mb-3">
                 We're listening 👂🏼. Share your thoughts
               </p>
-              <button className="w-full md:w-auto btn-neon px-4 py-2 rounded-lg text-sm font-medium">
-                FeedBack
-              </button>
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLScbKwy-QGmoF0BjgD8HL4vrhfO-QnW4tjyM8Xcj4hoTb0eyZQ/viewform"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-full md:w-auto btn-neon px-4 py-2 rounded-lg text-sm font-medium text-center"
+              >
+                Feedback
+              </a>
             </div>
           </div>
         </div>
