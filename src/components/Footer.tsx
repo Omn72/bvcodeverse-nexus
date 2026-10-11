@@ -4,14 +4,15 @@ import { Link } from 'react-router-dom';
 const Footer = () => {
   const quickLinks = [
     { name: 'Home', path: '/' },
+    { name: 'Git & GitHub Workshop', path: '/github-session' },
     { name: 'Team', path: '/team' },
     { name: 'Events', path: '/events' },
     { name: 'Projects', path: '/projects' },
   ];
 
   const resources = [
+    { name: 'Git Cheatsheet & Guide', path: '/github-session#workshop-content-section' },
     { name: 'Gallery', path: '/gallery' },
-    { name: 'Dashboard', path: '/dashboard' },
     { name: 'Join Us', path: '#join' },
     { name: 'Contact', path: '#contact' },
   ];
