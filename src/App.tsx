@@ -7,10 +7,9 @@ import Index from "./pages/Index";
 import Team from "./pages/Team";
 import Events from "./pages/Events";
 import Gallery from "./pages/Gallery";
-import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
+import GitHubSession from "./pages/GitHubSession";
 
-import ProfilePage from "./pages/ProfileModern";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -33,6 +32,23 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/github-session" element={<GitHubSession />} />
+          <Route path="/github-session/*" element={<GitHubSession />} />
+          <Route path="/github" element={<GitHubSession />} />
+          <Route path="/git" element={<GitHubSession />} />
+          <Route path="/git-workshop" element={<GitHubSession />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
       <AuthProvider>
         <Toaster />
         <Sonner />

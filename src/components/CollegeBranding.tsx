@@ -30,7 +30,7 @@ const AboutUs = () => {
         {/* Logos Side by Side */}
         <div className="flex justify-center items-center space-x-6 mb-6">
           <img 
-            src="https://bvcoe.bharatividyapeeth.edu/media/images/bvcoe_logo_3.png" 
+            src="/bharati-vidyapeeth-logo.png" 
             alt="Bharati Vidyapeeth College Of Engineering Logo" 
             className="w-40 h-40 object-contain"
           />

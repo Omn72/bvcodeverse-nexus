@@ -1,9 +1,6 @@
-import { ArrowRight, Trophy, Clock, Gift, Zap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
-import { Squares } from '@/components/ui/squares-background';
-
+// CTA Component
 const CTA = () => {
+  return null;
   return (
     <section className="py-20 bg-black relative overflow-hidden">
       {/* Animated Squares Background */}
