@@ -1,70 +1,14 @@
-import { ArrowRight, Code2, Users, Cpu } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const Hero = () => {
-import { Squares } from '@/components/ui/squares-background';
 import { useState, useEffect, lazy, Suspense } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { searchUsers, getRecentUsers } from '@/lib/supabase';
-import { Loader2, User, Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Code2, Users, Cpu } from 'lucide-react';
+import { Squares } from '@/components/ui/squares-background';
 
 const Hero = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [isDesktop, setIsDesktop] = useState(false);
   const navigate = useNavigate();
 
   // Lazy-load the heavy Spline only when rendering on desktop (lg+)
   const LazySplineScene = lazy(() => import('@/components/ui/splite').then(m => ({ default: m.SplineScene })));
-
-  const handleSearch = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults(suggestedUsers); // Show suggested users when query is empty
-      setShowResults(true);
-      return;
-    }
-
-    setIsSearching(true);
-    
-    try {
-      // Search for users using the dedicated search function
-      console.log('Searching for users with query:', query);
-      const { data: users, error } = await searchUsers(query, 8);
-      
-      if (error) {
-        console.error('Search error:', error);
-        setSearchResults([]);
-      } else {
-        console.log('Search results:', users);
-        setSearchResults(users || []);
-      }
-      
-      setShowResults(true);
-    } catch (error) {
-      console.error('Search error:', error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // Load suggested users when component mounts
-  const loadSuggestedUsers = async () => {
-    try {
-      const { data: users, error } = await getRecentUsers(6);
-      if (!error && users) {
-        setSuggestedUsers(users);
-      }
-    } catch (error) {
-      console.error('Error loading suggested users:', error);
-    }
-  };
-
-  useEffect(() => {
-    loadSuggestedUsers();
-  }, []);
 
   // Track viewport to render 3D only on desktop
   useEffect(() => {
@@ -75,32 +19,22 @@ const Hero = () => {
     return () => mq.removeEventListener?.('change', onChange as EventListener);
   }, []);
 
-  const handleUserClick = (userIdOrObj: any) => {
-    // If passed a profile object, prefer user_id/id; otherwise use the string id
-    const id = typeof userIdOrObj === 'object' ? (userIdOrObj.user_id || userIdOrObj.id) : userIdOrObj
-    // Navigate to internal ID-based profile route
-    navigate(`/user/id/${id}`);
-    setShowResults(false);
-    setSearchQuery('');
-  };
-
   return (
     <section className="relative py-12 overflow-hidden bg-black sm:pb-16 lg:pb-20 xl:pb-24">
-      {/* Background: same animated squares + gradient blobs as CTA */}
-  <div className="absolute inset-0 lg:hidden">
+      {/* Background: animated squares + gradient blobs */}
+      <div className="absolute inset-0 z-0">
         <Squares
           direction="diagonal"
           speed={0.5}
-          squareSize={50}
-          borderColor="#333333"
-          hoverFillColor="#1a1a1a"
-          className="opacity-70"
+          squareSize={40}
+          borderColor="#222222"
+          hoverFillColor="#333333"
         />
       </div>
-  <div className="absolute top-10 left-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse lg:hidden" />
-  <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000 lg:hidden" />
+      <div className="absolute top-10 left-10 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-pulse lg:hidden" />
+      <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary/10 rounded-full blur-3xl animate-pulse delay-1000 lg:hidden" />
 
-  <div className="px-4 mx-auto relative z-10 sm:px-6 lg:px-8 max-w-7xl pt-safe pb-safe">
+      <div className="px-4 mx-auto relative z-10 sm:px-6 lg:px-8 max-w-7xl pt-safe pb-safe">
         <div className="grid items-center grid-cols-1 gap-y-12 lg:grid-cols-2 gap-x-16">
           <div className="z-10">
             <h1 className="text-4xl font-normal text-white sm:text-5xl lg:text-6xl xl:text-7xl">
@@ -149,8 +83,7 @@ const Hero = () => {
                 </div>
                 <p className="text-sm text-gray-500">Join a vibrant community</p>
               </div>
-            Welcome to BVCodeVerse, BVCOEL's official coding club.
-            </p>
+            </div>
 
             <div className="mt-8 sm:mt-12">
               <a
@@ -168,9 +101,7 @@ const Hero = () => {
 
           {/* Hide robot on mobile; show only on lg+ */}
           <div className="relative hidden lg:flex items-center justify-center w-full h-full -mt-16">
-            {/* Gradient glow around robot - reduced size */}
             <div className="absolute z-0 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] h-[90%] rounded-full bg-gradient-to-br from-cyan-400/30 via-purple-500/20 to-transparent blur-md pointer-events-none"></div>
-            {/* Spline Robot 3D React Component - reduced size */}
             <Suspense fallback={null}>
               {isDesktop && (
                 <LazySplineScene 
@@ -179,17 +110,14 @@ const Hero = () => {
                 />
               )}
             </Suspense>
-    {/* Bottom overlay to blend legs into background (below ribbon) */}
-    <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none"></div>
           </div>
         </div>
-        
-  </div>
+      </div>
 
-  {/* Full-width Moving Ribbon - overlay robot legs on desktop */}
-  <div className="relative lg:absolute left-0 right-0 lg:bottom-0 w-full overflow-hidden mt-8 lg:mt-0 z-30">
+      {/* Full-width Moving Ribbon */}
+      <div className="relative lg:absolute left-0 right-0 lg:bottom-0 w-full overflow-hidden mt-8 lg:mt-0 z-30">
         <div className="bg-black py-3 relative min-h-[44px] flex items-center">
-          {/* Robot-style gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-br from-cyan-400/20 via-purple-500/15 to-transparent blur-sm"></div>
           <div className="relative whitespace-nowrap overflow-x-hidden flex">
             <div className="animate-marquee flex-shrink-0 flex items-center">
@@ -202,17 +130,6 @@ const Hero = () => {
                 PEOPLE • PASSION • PROFESSIONALISM • PEOPLE • PASSION • PROFESSIONALISM • PEOPLE • PASSION • PROFESSIONALISM • PEOPLE • PASSION • PROFESSIONALISM • PEOPLE • PASSION • PROFESSIONALISM • PEOPLE • PASSION • PROFESSIONALISM • PEOPLE • PASSION • PROFESSIONALISM • PEOPLE • PASSION • PROFESSIONALISM • 
               </span>
             </div>
-          </div>
-
-          <div className="relative h-[400px] lg:h-[600px] w-full hidden md:flex items-center justify-center">
-             <div className="relative w-full h-full bg-gradient-to-tr from-cyan-500/10 to-purple-500/10 rounded-2xl border border-gray-800 backdrop-blur-sm overflow-hidden flex items-center justify-center">
-                <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-                <div className="text-center p-8">
-                   <div className="text-6xl mb-4">🚀</div>
-                   <h3 className="text-2xl font-bold text-white mb-2">Launch Your Journey</h3>
-                   <p className="text-gray-400">Collaborate, Build, and Innovate</p>
-                </div>
-             </div>
           </div>
         </div>
       </div>

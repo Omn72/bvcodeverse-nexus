@@ -1,8 +1,3 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-
-const Navigation = () => {
-  const [expanded, setExpanded] = useState(false);
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, LogOut, User, ChevronDown, FileText } from 'lucide-react';
