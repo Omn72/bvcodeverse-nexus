@@ -3,6 +3,33 @@ import { Link } from 'react-router-dom';
 
 const Navigation = () => {
   const [expanded, setExpanded] = useState(false);
+import { useState, useRef, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, LogOut, User, ChevronDown, FileText } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
+const Navigation = () => {
+  const [expanded, setExpanded] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  // Debug log on component mount
+  useEffect(() => {
+    console.log('Navigation component mounted', { user: !!user, expanded, showUserMenu });
+  }, []);
+
+  // Lock body scroll when mobile menu open
+  useEffect(() => {
+    if (expanded) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [expanded]);
 
   const navItems = [
     { name: 'Git Workshop', path: '/github-session', isFeatured: true },
@@ -11,6 +38,50 @@ const Navigation = () => {
     { name: 'Gallery', path: '/gallery' },
     { name: 'Projects', path: '/projects' },
   ];
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        console.log('Clicked outside user menu, closing');
+        setShowUserMenu(false);
+      }
+    };
+
+    if (showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setExpanded(false);
+      setShowUserMenu(false);
+  // Hard navigate away to clear any protected page state
+  navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  // Get user display name and initials
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    return user.user_metadata?.full_name || 
+           user.user_metadata?.name || 
+           user.email?.split('@')[0] || 
+           'User';
+  };
+
+  const getUserInitials = () => {
+    const name = getUserDisplayName();
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
     <header className="py-3 bg-black sm:py-4 relative z-50">
@@ -25,6 +96,9 @@ const Navigation = () => {
               <img 
                 src="/logo.png" 
                 alt="BVCodeVerse Logo" 
+                width="48" height="48"
+                decoding="async"
+                loading="eager"
                 className="h-12 w-12 object-contain filter brightness-125 transform scale-125"
               />
             </Link>
@@ -76,6 +150,14 @@ const Navigation = () => {
         {expanded && (
           <nav className="md:hidden">
             <div className="flex flex-col pt-8 pb-4 space-y-5">
+            {/* Backdrop overlay (below the panel) */}
+            <div 
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998]" 
+              onClick={() => setExpanded(false)}
+            />
+            {/* Dropdown panel (above overlay) */}
+            <div className="fixed inset-x-0 top-0 z-[9999] bg-black/95 border-b border-gray-800 pt-safe px-4 pb-6 max-h-screen overflow-y-auto">
+              <div className="flex flex-col pt-6 space-y-6">
               {navItems.map((item) => (
                 <Link 
                   key={item.name}
@@ -98,6 +180,79 @@ const Navigation = () => {
                   )}
                 </Link>
               ))}
+
+              {/* Mobile Auth Section */}
+              {user ? (
+                <>
+                  <div className="flex items-center space-x-3 py-2 border-b border-gray-700 mb-4">
+                    <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-purple-500 rounded-full flex items-center justify-center text-black font-bold text-sm">
+                      {getUserInitials()}
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">{getUserDisplayName()}</p>
+                      <p className="text-gray-400 text-sm">{user.email}</p>
+                    </div>
+                  </div>
+                  <Link 
+                    to="/apply-contest"
+                    className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors py-2"
+                    onClick={() => setExpanded(false)}
+                  >
+                    <FileText className="w-4 h-4" />
+                    <span>Apply for Contest</span>
+                  </Link>
+                  <Link 
+                    to="/profile"
+                    className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors py-2"
+                    onClick={() => setExpanded(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Profile</span>
+                  </Link>
+                  <Link 
+                    to="/dashboard"
+                    className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors py-2"
+                    onClick={() => setExpanded(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Mobile sign out clicked');
+                      handleSignOut();
+                    }}
+                    className="flex items-center space-x-2 text-gray-400 hover:text-red-400 transition-colors text-left py-2 w-full"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link 
+                    to="/login"
+                    className="text-base font-normal text-gray-400 hover:text-white transition-colors"
+                    onClick={() => setExpanded(false)}
+                  >
+                    Sign In
+                  </Link>
+                  <div className="relative inline-flex items-center justify-center group">
+                    <div className="absolute transition-all duration-200 rounded-full -inset-px bg-gradient-to-r from-cyan-500 to-purple-500 group-hover:shadow-lg group-hover:shadow-cyan-500/50"></div>
+                    <Link 
+                      to="/signup" 
+                      className="relative inline-flex items-center justify-center w-full px-6 py-2 text-base font-normal text-white bg-black border border-transparent rounded-full"
+                      onClick={() => setExpanded(false)}
+                    >
+                      Login
+                    </Link>
+                  </div>
+                </>
+              )}
+              </div>
             </div>
           </nav>
         )}

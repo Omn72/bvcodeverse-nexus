@@ -113,7 +113,6 @@ const Events = () => {
           </div>
         </div>
       </section>
-      <Footer />
     </Layout>
   );
 };

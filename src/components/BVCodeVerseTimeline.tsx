@@ -75,7 +75,7 @@ const timelineData = [
 export default function BVCodeVerseTimeline() {
   return (
     <section className="py-0 bg-black">
-      <div className="text-center mb-8 pt-16">
+      <div className="text-center mb-4">
         <div className="inline-flex items-center px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
           <Zap className="h-4 w-4 text-primary mr-2" />
           <span className="text-sm font-medium text-primary">Your Journey</span>
@@ -83,7 +83,7 @@ export default function BVCodeVerseTimeline() {
         <h2 className="text-3xl md:text-5xl font-bold mb-6 text-white">
           Why Choose <span className="gradient-text">BVCodeVerse</span>
         </h2>
-        <p className="text-xl text-white/70 max-w-3xl mx-auto mb-8">
+        <p className="text-xl text-white/70 max-w-3xl mx-auto mb-4">
           Explore your development journey through our interactive orbital timeline. Click on any node to discover what makes us special.
         </p>
       </div>

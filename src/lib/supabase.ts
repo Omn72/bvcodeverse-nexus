@@ -67,11 +67,179 @@ export interface ContestApplication {
   updated_at?: string
 }
 
-// Replace these with your actual Supabase URL and anon key
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+// Supabase URL and anon key
+// Uses Vite env if present, otherwise falls back to the dev values in test-db.js for convenience
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ghtrbnqzsphmqkormffw.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdodHJibnF6c3BobXFrb3JtZmZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNjUyOTUsImV4cCI6MjA3MjY0MTI5NX0.V_Il6kJ_zpyw_ZcE5mJQCoer1Gv0ypr8FDvRm7Q-2CU'
+
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('[Supabase] VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY missing. Using fallback dev credentials. Set env vars for production.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+// Minimal debug info (safe to show in UI). Does NOT expose keys.
+export const getSupabaseInfo = () => ({
+  url: supabaseUrl,
+  isFallback:
+    !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY,
+})
+
+// Public REST params (anon key is public in clients)
+export const getSupabaseRestParams = () => ({
+  url: supabaseUrl,
+  anonKey: supabaseAnonKey,
+})
+
+// Low-level REST fetch with timeout
+async function restFetch(path: string, init: RequestInit & { timeoutMs?: number } = {}) {
+  const { url, anonKey } = getSupabaseRestParams()
+  const controller = new AbortController()
+  const timeoutMs = init.timeoutMs ?? 7000
+  const t = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const resp = await fetch(`${url}${path}`, {
+      ...init,
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+        'Content-Type': 'application/json',
+        ...(init.headers || {}),
+      },
+      signal: controller.signal,
+    })
+    const text = await resp.text()
+    let json: any = null
+    try { json = text ? JSON.parse(text) : null } catch {}
+    if (!resp.ok) {
+      const msg = json?.message || `REST ${resp.status}`
+      return { ok: false, status: resp.status, body: json, error: { message: msg } }
+    }
+    return { ok: true, status: resp.status, body: json }
+  } catch (e: any) {
+    if (e?.name === 'AbortError') return { ok: false, status: 0, body: null, error: { message: 'REST timeout' } }
+    return { ok: false, status: 0, body: null, error: { message: e?.message || 'REST failed' } }
+  } finally {
+    clearTimeout(t)
+  }
+}
+
+// REST fallbacks
+async function getAllContestsRest() {
+  const q = await restFetch(`/rest/v1/contests?select=*&order=created_at.desc`, { timeoutMs: 7000 })
+  if (!q.ok) return { data: null, error: q.error }
+  return { data: q.body as any[], error: null }
+}
+
+async function getAllApplicationsRest() {
+  const q = await restFetch(`/rest/v1/contest_applications?select=*&order=created_at.desc`, { timeoutMs: 7000 })
+  if (!q.ok) return { data: null, error: q.error }
+  return { data: q.body as any[], error: null }
+}
+
+async function createContestRest(contestData: Omit<Contest, 'id' | 'created_at' | 'updated_at'>) {
+  const payload = {
+    ...contestData,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  const q = await restFetch(`/rest/v1/contests`, {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(payload),
+    timeoutMs: 8000,
+  })
+  if (!q.ok) return { data: null, error: q.error }
+  const arr = Array.isArray(q.body) ? q.body : [q.body]
+  return { data: arr[0], error: null }
+}
+
+async function deleteContestRest(contestId: string) {
+  const q = await restFetch(`/rest/v1/contests?id=eq.${encodeURIComponent(contestId)}`, {
+    method: 'DELETE',
+    headers: { Prefer: 'return=representation' },
+    timeoutMs: 8000,
+  })
+  if (!q.ok) return { data: null, error: q.error }
+  return { data: q.body, error: null }
+}
+
+async function getActiveContestsRest() {
+  const q = await restFetch(`/rest/v1/contests?status=eq.Open&select=*&order=created_at.desc`, { timeoutMs: 7000 })
+  if (!q.ok) return { data: null, error: q.error }
+  return { data: q.body as any[], error: null }
+}
+
+async function submitApplicationRest(applicationData: Omit<ContestApplication, 'id' | 'created_at' | 'updated_at' | 'status'>) {
+  const payload = {
+    ...applicationData,
+  status: 'Approved',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  const q = await restFetch(`/rest/v1/contest_applications`, {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(payload),
+    timeoutMs: 8000,
+  })
+  if (!q.ok) return { data: null, error: q.error }
+  const arr = Array.isArray(q.body) ? q.body : [q.body]
+  return { data: arr[0], error: null }
+}
+
+// REST: get applications by user with basic contest join
+async function getApplicationsByUserRest(userId: string) {
+  const path = `/rest/v1/contest_applications?user_id=eq.${encodeURIComponent(
+    userId
+  )}&select=*,contests(title,category,status,deadline)&order=created_at.desc`
+  // Use a shorter timeout to avoid blocking the UI too long; UI will show cached results meanwhile
+  const q = await restFetch(path, { timeoutMs: 4000 })
+  if (!q.ok) return { data: null, error: q.error }
+  return { data: (q.body as any[]) || [], error: null }
+}
+
+// REST: update application for the current user (limited fields)
+async function updateMyApplicationRest(
+  applicationId: string,
+  userId: string,
+  updates: Partial<Pick<ContestApplication, 'github_link' | 'team_members' | 'tech_stack' | 'project_description'>>
+) {
+  const payload = {
+    ...updates,
+    updated_at: new Date().toISOString(),
+  }
+  const path = `/rest/v1/contest_applications?id=eq.${encodeURIComponent(
+    applicationId
+  )}&user_id=eq.${encodeURIComponent(userId)}`
+  const q = await restFetch(path, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify(payload),
+    timeoutMs: 8000,
+  })
+  if (!q.ok) return { data: null, error: q.error }
+  const arr = Array.isArray(q.body) ? q.body : [q.body]
+  return { data: arr[0], error: null }
+}
+
+// Utility: enforce a max time for any async call
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timeoutId: any
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      const err = new Error(`${label} timeout after ${ms}ms`)
+      ;(err as any).code = 'ETIMEOUT'
+      reject(err)
+    }, ms)
+  })
+  try {
+    const result = await Promise.race([promise, timeout]) as T
+    return result
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
 
 // Helper functions for authentication
 export const signUp = async (email: string, password: string) => {
@@ -466,11 +634,31 @@ export const warmupDatabase = async () => {
       .select('id')
       .limit(1)
     
-    if (error && !error.message?.includes('relation "contests" does not exist')) {
+    if (error) {
+      const msg = (error && (error.message || (error as any).code)) || String(error)
+
+      // Common case: SQL not run yet
+      if (msg.includes('relation "contests" does not exist')) {
+        console.warn('Database tables not found. Please run the SQL setup: DATABASE_SETUP_REQUIRED.md -> database-setup.sql')
+        return {
+          success: false,
+          error: { message: 'Database not initialized: run database-setup.sql in your Supabase project (see DATABASE_SETUP_REQUIRED.md)' },
+        }
+      }
+
+      // Network / fetch errors when the Supabase host cannot be reached
+      if (msg.toLowerCase().includes('fetch failed') || msg.toLowerCase().includes('network') || msg.toLowerCase().includes('failed to fetch')) {
+        console.error('Network error while contacting Supabase:', error)
+        return {
+          success: false,
+          error: { message: 'Network error: unable to reach Supabase. Check internet connection, firewall, or proxy settings.' },
+        }
+      }
+
       console.error('Database warmup failed:', error)
       return { success: false, error }
     }
-    
+
     console.log('Database connection warmed up successfully')
     return { success: true, error: null }
   } catch (err: any) {
@@ -480,36 +668,61 @@ export const warmupDatabase = async () => {
 }
 
 export const createContest = async (contestData: Omit<Contest, 'id' | 'created_at' | 'updated_at'>): Promise<any> => {
-  // FAST MODE: Direct database insert without retries or extra logging
-  const { data, error } = await supabase
-    .from('contests')
-    .insert({
-      ...contestData,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .select()
-    .single()
-  
-  return { data, error }
+  // Prefer REST first to avoid SDK timeouts in some browsers
+  const rest = await createContestRest(contestData)
+  if (rest.data || !rest.error) return rest
+  // If REST fails for some reason, try SDK as a secondary option
+  try {
+    const builder = supabase
+      .from('contests')
+      .insert({
+        ...contestData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
+    const { data, error } = await withTimeout<any>(
+      Promise.resolve(builder as any),
+      6000,
+      'createContest'
+    )
+    return { data, error }
+  } catch (error: any) {
+    return { data: null, error }
+  }
 }
 
 export const getAllContests = async () => {
   try {
+    // Prefer REST first to avoid SDK timeouts in some environments
+    const rest = await getAllContestsRest()
+    if (rest.data) return rest
+
+    // If REST fails, try SDK as a secondary option
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-    
-    const { data, error } = await supabase
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
+    const builder = supabase
       .from('contests')
       .select('*')
       .order('created_at', { ascending: false })
       .abortSignal(controller.signal)
-    
-    clearTimeout(timeoutId);
-    return { data, error }
+
+    const { data, error } = await withTimeout<any>(
+      Promise.resolve(builder as any),
+      6000,
+      'getAllContests'
+    )
+
+    clearTimeout(timeoutId)
+    if (error) return { data, error }
+    return { data, error: null }
   } catch (error) {
-    if (error.name === 'AbortError') {
-      console.error('Database query timed out after 3 seconds');
+    if ((error as any).name === 'AbortError' || (error as any).code === 'ETIMEOUT') {
+      // Final fallback to REST
+      const rest = await getAllContestsRest()
+      if (rest.data) return rest
       return { data: null, error: { message: 'Database connection timeout' } };
     }
     console.error('Error in getAllContests:', error);
@@ -518,12 +731,14 @@ export const getAllContests = async () => {
 }
 
 export const getActiveContests = async () => {
+  // Prefer REST first
+  const rest = await getActiveContestsRest()
+  if (rest.data) return rest
   const { data, error } = await supabase
     .from('contests')
     .select('*')
     .eq('status', 'Open')
     .order('created_at', { ascending: false })
-  
   return { data, error }
 }
 
@@ -542,45 +757,60 @@ export const updateContest = async (contestId: string, updates: Partial<Contest>
 }
 
 export const deleteContest = async (contestId: string) => {
+  // Prefer REST first to avoid SDK timeouts in some browsers
+  const rest = await deleteContestRest(contestId)
+  if (rest.data || !rest.error) return rest
   try {
-    console.log('Deleting contest with ID:', contestId)
-    
-    const { data, error } = await supabase
+    const builder = supabase
       .from('contests')
       .delete()
       .eq('id', contestId)
-    
-    if (error) {
-      console.error('Supabase error deleting contest:', error)
-    } else {
-      console.log('Contest deleted successfully:', data)
-    }
-    
+    const { data, error } = await withTimeout<any>(
+      Promise.resolve(builder as any),
+      6000,
+      'deleteContest'
+    )
     return { data, error }
   } catch (err: any) {
-    console.error('Unexpected error in deleteContest:', err)
     return { data: null, error: { message: err.message || 'Unexpected error' } }
   }
 }
 
 // Contest Application Functions  
 export const submitContestApplication = async (applicationData: Omit<ContestApplication, 'id' | 'created_at' | 'updated_at' | 'status'>): Promise<any> => {
-  // FAST MODE: Direct database insert
+  // Prefer REST first to avoid SDK timeouts
+  const rest = await submitApplicationRest(applicationData)
+  if (rest.data || !rest.error) return rest
   const { data, error } = await supabase
     .from('contest_applications')
     .insert({
       ...applicationData,
-      status: 'Pending',
+      status: 'Approved',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
     .select()
     .single()
-  
   return { data, error }
 }
 
+// Bulk approve: set all Pending applications to Approved (REST-first)
+async function approveAllPendingApplicationsRest() {
+  const q = await restFetch(`/rest/v1/contest_applications?status=eq.Pending`, {
+    method: 'PATCH',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({ status: 'Approved', updated_at: new Date().toISOString() }),
+    timeoutMs: 10000,
+  })
+  if (!q.ok) return { data: null, error: q.error }
+  return { data: q.body as any[], error: null }
+}
+
 export const getAllApplications = async () => {
+  // Prefer REST first (no joins to reduce permissions issues)
+  const rest = await getAllApplicationsRest()
+  if (rest.data || !rest.error) return rest
+  // Fallback to SDK with join for richer data
   const { data, error } = await supabase
     .from('contest_applications')
     .select(`
@@ -592,7 +822,6 @@ export const getAllApplications = async () => {
       )
     `)
     .order('created_at', { ascending: false })
-  
   return { data, error }
 }
 
@@ -607,21 +836,38 @@ export const getApplicationsByContest = async (contestId: string) => {
 }
 
 export const getApplicationsByUser = async (userId: string) => {
-  const { data, error } = await supabase
-    .from('contest_applications')
-    .select(`
-      *,
-      contests (
-        title,
-        category,
-        status,
-        deadline
-      )
-    `)
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-  
-  return { data, error }
+  // Prefer REST first for reliability
+  const rest = await getApplicationsByUserRest(userId)
+  if (rest.data || !rest.error) return rest
+  // Fallback to SDK if REST fails
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
+    const builder = supabase
+      .from('contest_applications')
+      .select(`
+        *,
+        contests (
+          title,
+          category,
+          status,
+          deadline
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .abortSignal(controller.signal)
+
+    const { data, error } = await withTimeout<any>(
+      Promise.resolve(builder as any),
+      6000,
+      'getApplicationsByUser'
+    )
+    clearTimeout(timeoutId)
+    return { data, error }
+  } catch (error: any) {
+    return { data: null, error }
+  }
 }
 
 export const updateApplicationStatus = async (applicationId: string, status: ContestApplication['status']) => {
@@ -635,6 +881,40 @@ export const updateApplicationStatus = async (applicationId: string, status: Con
     .select()
     .single()
   
+  return { data, error }
+}
+
+export const approveAllPendingApplications = async () => {
+  const rest = await approveAllPendingApplicationsRest()
+  if (rest.data || !rest.error) return rest
+  const { data, error } = await supabase
+    .from('contest_applications')
+    .update({ status: 'Approved', updated_at: new Date().toISOString() })
+    .eq('status', 'Pending')
+    .select()
+  return { data, error }
+}
+
+// Update application fields for the current user
+export const updateMyApplication = async (
+  applicationId: string,
+  userId: string,
+  updates: Partial<Pick<ContestApplication, 'github_link' | 'team_members' | 'tech_stack' | 'project_description'>>
+) => {
+  // Prefer REST first
+  const rest = await updateMyApplicationRest(applicationId, userId, updates)
+  if (rest.data || !rest.error) return rest
+  // Fallback to SDK
+  const { data, error } = await supabase
+    .from('contest_applications')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', applicationId)
+    .eq('user_id', userId)
+    .select()
+    .single()
   return { data, error }
 }
 
@@ -701,36 +981,39 @@ export const getContestStats = async () => {
 export const testDatabaseConnection = async () => {
   try {
     console.log('Testing database connection...')
-    
-    // Test basic Supabase connection with a simple query
-    const { data: healthCheck, error: healthError } = await supabase
-      .rpc('version') // Try a simple function call first
-    
-    if (healthError) {
-      console.log('RPC test failed, trying table query...')
-      
-      // Try a simple select on contests table
-      const { data: tableCheck, error: tableError } = await supabase
-        .from('contests')
-        .select('id')
-        .limit(1)
-      
-      if (tableError) {
-        console.error('Table query failed:', tableError)
-        return { 
-          success: false, 
-          error: `Database error: ${tableError.message}`,
-          suggestion: tableError.message.includes('relation "contests" does not exist') 
-            ? 'Run the simple-db-setup.sql script in your Supabase dashboard'
-            : 'Check your Supabase configuration and network connection'
-        }
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 5000) // 5s
+
+    // Prefer table query; RPC may be disabled
+    const tablePromise = supabase
+      .from('contests')
+      .select('id')
+      .limit(1)
+      .abortSignal(controller.signal)
+
+    const { data: tableCheck, error: tableError } = await Promise.resolve(tablePromise as any)
+
+    clearTimeout(timeout)
+
+    if (tableError) {
+      console.error('Table query failed:', tableError)
+      return {
+        success: false,
+        error: `Database error: ${tableError.message}`,
+        suggestion: tableError.message.includes('relation "contests" does not exist')
+          ? 'Run the simple-db-setup.sql script in your Supabase dashboard'
+          : 'Check your Supabase configuration and network connection'
       }
     }
-    
+
     console.log('Database connection successful!')
     return { success: true, error: null, suggestion: 'Database is working correctly!' }
     
   } catch (error: any) {
+    if (error?.name === 'AbortError' || error?.code === 'ETIMEOUT') {
+      return { success: false, error: 'Database test timeout', suggestion: 'Network slow or blocked. Retry or check VPN/firewall.' }
+    }
     console.error('Unexpected database error:', error)
     return { 
       success: false, 
